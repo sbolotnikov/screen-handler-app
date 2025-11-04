@@ -47,21 +47,23 @@ const Navbar = ({ path, locale, children }: Props) => {
           icon: 'Home',
         },
       ];
-    } else if (session.user.role == 'Admin') {
-      linksArray = [
-        {
-          url: '/',
-          title: 'Home',
-          icon: 'Home',
-        },
+    }
+    // else if (session.user.role == 'Admin') {
+    //   linksArray = [
+    //     {
+    //       url: '/',
+    //       title: 'Home',
+    //       icon: 'Home',
+    //     },
 
-        {
-          url: '/admin/dashboard',
-          title: 'Dashboard',
-          icon: 'Dashboard',
-        },
-      ];
-    } else {
+    //     {
+    //       url: '/admin/dashboard',
+    //       title: 'Dashboard',
+    //       icon: 'Dashboard',
+    //     },
+    //   ];
+    // }
+     else {
       linksArray = [
         {
           url: '/',
@@ -227,17 +229,17 @@ const Navbar = ({ path, locale, children }: Props) => {
               <Link href={'/profile'}>
                 <div className="group h-6 w-6 md:h-8 md:w-8 flex  cursor-pointer  hover:scale-110  flex-col items-center ">
                   <div className="   group-hover:animate-bounce stroke-lightMainColor dark:stroke-darkMainColor ">
-                    {session.user.image ? (
+                    {/* {session.user.image ? (
                       <ImgFromDb
                         url={session.user.image ? session.user.image : ''}
                         stylings="object-fill rounded-full h-6 w-6 md:h-9 md:w-9"
                         alt="profile picture"
                       />
-                    ) : (
+                    ) : ( */}
                       <div className=" h-6 w-6 md:h-8 md:w-8 fill-none rounded-full bg-lightMainBG dark:bg-lightMainColor  stroke-lightMainColor dark:stroke-darkMainColor ">
                         <ShowIcon icon={'DefaultUser'} stroke={'2'} />
                       </div>
-                    )}
+                    {/* )} */}
                   </div>
                   <p className="hidden tracking-widest mx-3 transition duration-300 ease-in-out opacity-100 rounded-md text-darkMainColor md:bg-lightMainBG md:dark:bg-lightMainColor md:dark:text-darkMainColor md:text-lightMainColor group-hover:inline-flex md:block md:opacity-0 md:group-hover:opacity-100 ">
                     {'Profile'}
