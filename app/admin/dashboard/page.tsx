@@ -1,13 +1,10 @@
 'use client';
-import { FC } from 'react'; 
+import { FC } from 'react';
 import { PageWrapper } from '@/components/page-wrapper';
-import ShowIcon from '@/components/svg/showIcon'; 
+import ShowIcon from '@/components/svg/showIcon';
 import PartyAccessManager from '@/components/PartyAccessManager';
 
-
 const Page: FC = ({}) => {
- 
-
   return (
     <PageWrapper className="absolute top-0 left-0 w-full h-screen flex items-center justify-center">
       <div
@@ -27,7 +24,7 @@ const Page: FC = ({}) => {
                 <ShowIcon icon={'Dashboard'} stroke={'0.1'} />
               </div>
             </div>
-            
+
             {/* Party Access Management Section */}
             <div className="flex-1 overflow-y-auto">
               <PartyAccessManager />

@@ -3,12 +3,13 @@ import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
 export default async function proxy(req: NextRequest) {
-  const session = await getToken({ 
-    req, 
+  const session = await getToken({
+    req,
     secret: process.env.NEXTAUTH_SECRET,
-    cookieName: process.env.NODE_ENV === 'production' 
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token'
+    cookieName:
+      process.env.NODE_ENV === 'production'
+        ? '__Secure-next-auth.session-token'
+        : 'next-auth.session-token',
   });
 
   if (req.nextUrl.pathname.includes('/admin')) {
@@ -24,7 +25,7 @@ export default async function proxy(req: NextRequest) {
       console.log('Access denied - redirecting to home', {
         sessionExists: !!session,
         currentRole: session?.role,
-        requiredRole: 'Admin'
+        requiredRole: 'Admin',
       });
       return NextResponse.redirect(new URL('/', req.url));
     }

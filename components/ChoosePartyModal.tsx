@@ -11,9 +11,18 @@ import { save_Template } from '@/functions/functions';
 import {
   getUserAccessibleParties,
   addPartyAccessToAllUsers,
-  PartyWithAccess,
 } from '@/utils/partyAccess';
 import { useSession } from 'next-auth/react';
+import { TablePage } from '@/types/types';
+
+// Extend the session user type to include role
+interface ExtendedUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
+}
+
 type Props = {
   onReturn: (str: string) => void;
   onAlert: (name: string, id: string) => void;
@@ -51,6 +60,7 @@ type PartyType = {
   originX: number;
   originY: number;
   particleTypes: string[];
+  tablePages: TablePage[];
 };
 const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
   const { data: session } = useSession();
@@ -122,6 +132,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
         originX: (party.originX as number) || 400,
         originY: (party.originY as number) || 400,
         particleTypes: (party.particleTypes as string[]) || [],
+        tablePages: (party.tablePages as TablePage[]) || [],
       })) as PartyType[];
 
       if (formattedParties.length > 0) {
@@ -170,6 +181,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
       originX: number;
       originY: number;
       particleTypes: string[];
+      tablePages: TablePage[];
     }
 
     const arr1 = q.docs.map(
@@ -313,22 +325,158 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
           Create Party
         </button>
         {visibleInput && (
-          <div>
+          <div className="w-full flex flex-col gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
             <input
               type="text"
               value={partyName}
+              placeholder="Enter party name"
               className="w-full p-2 border border-gray-300 rounded"
               onChange={(e) => {
                 e.preventDefault();
                 setPartyName(e.target.value);
               }}
             />
+
+            {/* Admin-only section copying options */}
+            {(session?.user as ExtendedUser)?.role === 'Admin' &&
+              parties.length > 0 && (
+                <div className="w-full border-t pt-4">
+                  <h3 className="text-sm font-semibold mb-2 text-gray-700">
+                    Copy sections from existing parties (Admin only):
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {/* displayedPictures */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs">Pictures:</label>
+                      <select
+                        data-section="displayedPictures"
+                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                      >
+                        <option value="">Copy from...</option>
+                        {parties.map((party) => (
+                          <option key={party.id} value={party.id}>
+                            {party.name} ({party.displayedPictures.length} pics)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* displayedVideos */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs">Videos:</label>
+                      <select
+                        data-section="displayedVideos"
+                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                      >
+                        <option value="">Copy from...</option>
+                        {parties.map((party) => (
+                          <option key={party.id} value={party.id}>
+                            {party.name} ({party.displayedVideos.length} videos)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* displayedPicturesAuto */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs">Auto Pictures:</label>
+                      <select
+                        data-section="displayedPicturesAuto"
+                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                      >
+                        <option value="">Copy from...</option>
+                        {parties.map((party) => (
+                          <option key={party.id} value={party.id}>
+                            {party.name} ({party.displayedPicturesAuto.length}{' '}
+                            auto pics)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* savedMessages */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs">Messages:</label>
+                      <select
+                        data-section="savedMessages"
+                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                      >
+                        <option value="">Copy from...</option>
+                        {parties.map((party) => (
+                          <option key={party.id} value={party.id}>
+                            {party.name} ({party.savedMessages.length} messages)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* tablePages */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs">Table Pages:</label>
+                      <select
+                        data-section="tablePages"
+                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                      >
+                        <option value="">Copy from...</option>
+                        {parties.map((party) => (
+                          <option key={party.id} value={party.id}>
+                            {party.name} ({party.tablePages.length} tables)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             <button
               className="btnFancy"
               onClick={async (e) => {
                 e.preventDefault();
                 setVisibleInput(!visibleInput);
                 console.log('submit');
+
+                // Get selected values from admin dropdowns
+                const copiedData: Partial<PartyType> = {};
+
+                if ((session?.user as ExtendedUser)?.role === 'Admin') {
+                  const selects = document.querySelectorAll(
+                    'select[data-section]'
+                  ) as NodeListOf<HTMLSelectElement>;
+                  selects.forEach((select) => {
+                    const section = select.dataset.section;
+                    const selectedPartyId = select.value;
+                    if (selectedPartyId && section) {
+                      const sourceParty = parties.find(
+                        (p) => p.id === selectedPartyId
+                      );
+                      if (sourceParty) {
+                        switch (section) {
+                          case 'displayedPictures':
+                            copiedData.displayedPictures =
+                              sourceParty.displayedPictures;
+                            break;
+                          case 'displayedVideos':
+                            copiedData.displayedVideos =
+                              sourceParty.displayedVideos;
+                            break;
+                          case 'displayedPicturesAuto':
+                            copiedData.displayedPicturesAuto =
+                              sourceParty.displayedPicturesAuto;
+                            break;
+                          case 'savedMessages':
+                            copiedData.savedMessages =
+                              sourceParty.savedMessages;
+                            break;
+                          case 'tablePages':
+                            copiedData.tablePages = sourceParty.tablePages;
+                            break;
+                        }
+                      }
+                    }
+                  });
+                }
+
                 const resObj = {
                   image: '',
                   name: partyName,
@@ -337,18 +485,18 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   fontSize: 10,
                   fontSizeTime: 10,
                   frameStyle: 'No frame',
-                  displayedPictures: [],
-                  displayedVideos: [],
+                  displayedPictures: copiedData.displayedPictures || [],
+                  displayedVideos: copiedData.displayedVideos || [],
                   videoChoice: { link: '', name: '' },
                   compLogo: { link: '', name: '' },
                   titleBarHider: false,
                   showUrgentMessage: false,
                   showHeatNumber: false,
                   showSVGAnimation: true,
-                  displayedPicturesAuto: [],
+                  displayedPicturesAuto: copiedData.displayedPicturesAuto || [],
                   seconds: 5,
                   manualPicture: { link: '', name: '' },
-                  savedMessages: [
+                  savedMessages: copiedData.savedMessages || [
                     ' ',
                     'Argentine Tango',
                     'Bachata',
@@ -383,6 +531,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   originY: 400,
                   heat: '',
                   particleTypes: [],
+                  tablePages: copiedData.tablePages || [],
                 };
 
                 try {

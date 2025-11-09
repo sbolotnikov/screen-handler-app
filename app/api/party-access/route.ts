@@ -42,10 +42,10 @@ export async function GET(req: Request) {
     if (getAllParties && session.user.role === 'Admin') {
       // Return all parties for admin interface
       const partiesSnapshot = await getDocs(collection(db, 'parties'));
-      const allParties = partiesSnapshot.docs.map(doc => ({
+      const allParties = partiesSnapshot.docs.map((doc) => ({
         id: doc.id,
         name: doc.data().name || 'Unnamed Party',
-        ...doc.data()
+        ...doc.data(),
       }));
       return NextResponse.json({ parties: allParties });
     }

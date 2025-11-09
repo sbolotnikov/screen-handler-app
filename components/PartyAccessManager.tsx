@@ -163,9 +163,7 @@ const PartyAccessManager = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* User Selection */}
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Select User:
-          </label>
+          <label className="block text-sm font-medium mb-2">Select User:</label>
           <select
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
@@ -234,7 +232,10 @@ const PartyAccessManager = () => {
               {selectedUserData.parties.map((partyId) => {
                 const party = parties.find((p) => p.id === partyId);
                 return (
-                  <li key={partyId} className="text-lightMainColor dark:text-darkMainColor">
+                  <li
+                    key={partyId}
+                    className="text-lightMainColor dark:text-darkMainColor"
+                  >
                     {party ? party.name : `Unknown Party (${partyId})`}
                   </li>
                 );

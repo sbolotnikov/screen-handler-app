@@ -6,9 +6,12 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
-    
+
     if (!email) {
-      return NextResponse.json({ error: 'Email parameter required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Email parameter required' },
+        { status: 400 }
+      );
     }
 
     const usersQuery = query(
@@ -25,13 +28,15 @@ export async function GET(req: Request) {
     const userDoc = userSnapshot.docs[0];
     const userData = {
       id: userDoc.id,
-      ...userDoc.data()
+      ...userDoc.data(),
     };
 
     return NextResponse.json({ user: userData });
-
   } catch (error) {
     console.error('Error fetching user:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

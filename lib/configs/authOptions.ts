@@ -50,12 +50,13 @@ export const authOptions = {
     // A secret to use for key generation (you should set this explicitly)
     secret: process.env.NEXTAUTH_SECRET,
   },
-  
+
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' 
-        ? '__Secure-next-auth.session-token'
-        : 'next-auth.session-token',
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.session-token'
+          : 'next-auth.session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
@@ -274,7 +275,7 @@ export const authOptions = {
               oldRole,
               newRole: token.role,
               dbRole: userData.role,
-              parties: token.parties?.length || 0
+              parties: token.parties?.length || 0,
             });
           } else {
             console.log('JWT callback - user not found in DB:', token.email);
