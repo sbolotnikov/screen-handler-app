@@ -1,15 +1,16 @@
 'use client';
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import Link from 'next/link';
 import NavItem from './navItem';
 import Burger from './burger';
-// import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import ShowIcon from '../svg/showIcon';
-// import { signIn, signOut } from 'next-auth/react';
-import ImgFromDb from '../ImgFromDb';
+// import { signIn } from 'next-auth/react'; 
+import { useRouter } from 'next/navigation';
 import { SettingsContext } from '@/hooks/useSettings';
 import { ScreenSettingsContextType } from '@/types/types';
 import { useDimensions } from '@/hooks/useDimensions';
+import ImgFromDb from '../ImgFromDb';
 
 type Props = {
   path: string;
@@ -20,59 +21,47 @@ type Props = {
 const Navbar = ({ path, locale, children }: Props) => {
   const [style1, setStyle1] = useState({ display: 'none' });
   const [burgerState, setBurgerState] = useState(false);
-  const [cartState, setCartState] = useState(false);
-  const [isChatbotModalOpen, setIsChatbotModalOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+   
+  const router = useRouter();
   const { changeTheme, darkMode, hideNav } = useContext(
     SettingsContext
   ) as ScreenSettingsContextType;
-  // const { data: session } = useSession();
-  const session = undefined; // TO BE REMOVED AND REPLACED WITH THE ABOVE LINE FOR AUTHENTICATION
+  const { data: session } = useSession();
+  const userImage = session?.user?.image ?? '';
+  const userRole = (session?.user as { role?: string })?.role;
   const windowSize = useDimensions();
 
-  const [navbarLinks, setNavbarLinks] = useState([
-    {
-      url: '/',
-      title: 'Home',
-      icon: 'Home',
-    },
-  ]);
-  useEffect(() => {
-    let linksArray = [];
+  const navbarLinks = useMemo(() => {
     if (!session) {
-      linksArray = [
+      return [
         {
           url: '/',
           title: 'Home',
           icon: 'Home',
         },
       ];
-    }
-    // else if (session.user.role == 'Admin') {
-    //   linksArray = [
-    //     {
-    //       url: '/',
-    //       title: 'Home',
-    //       icon: 'Home',
-    //     },
+    }else if (userRole === 'Admin') { 
+      return [
+        {
+          url: '/',
+          title: 'Home',
+          icon: 'Home',
+        },
 
-    //     {
-    //       url: '/admin/dashboard',
-    //       title: 'Dashboard',
-    //       icon: 'Dashboard',
-    //     },
-    //   ];
-    // }
-     else {
-      linksArray = [
         {
-          url: '/',
-          title: 'Home',
-          icon: 'Home',
+          url: '/admin/dashboard',
+          title: 'Dashboard',
+          icon: 'Dashboard',
         },
       ];
     }
-    setNavbarLinks(linksArray);
+    return [
+      {
+        url: '/',
+        title: 'Home',
+        icon: 'Home',
+      },
+    ];
   }, [session]);
   const changeMenu = (isChangeOrientation: boolean) => {
     const items = document.querySelectorAll('.navbar__item');
@@ -146,19 +135,30 @@ const Navbar = ({ path, locale, children }: Props) => {
     }
   };
   useEffect(() => {
-    if (windowSize.width !== undefined) {
-      if (windowSize.width! < 768) {
-        const items = document.querySelectorAll('.navbar__item');
-        for (let i = 0; i < items.length; i++) {
-          items[i].classList.add('translate-x-80');
-        }
-        document.getElementById('theme-toggle')?.classList.add('hidden');
-        document.getElementById('locale-toggle')?.classList.add('hidden');
-        document.getElementById('profile-toggle')?.classList.add('hidden');
-      }
-      changeMenu(true);
+    if (windowSize.width === undefined) {
+      return;
     }
+
+    if (windowSize.width < 768) {
+      const items = document.querySelectorAll('.navbar__item');
+      for (let i = 0; i < items.length; i++) {
+        items[i].classList.add('translate-x-80');
+      }
+      document.getElementById('theme-toggle')?.classList.add('hidden');
+      document.getElementById('locale-toggle')?.classList.add('hidden');
+      document.getElementById('profile-toggle')?.classList.add('hidden');
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      changeMenu(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [windowSize.width]);
+ 
+
   return (
     <nav className="navbar w-screen h-[100svh] overflow-hidden">
       <div className=" absolute  inset-0 flex flex-col items-center justify-end z-[-5] pb-14 md:pb-0">
@@ -174,7 +174,7 @@ const Navbar = ({ path, locale, children }: Props) => {
       >
         <ul
           id="navBarContainer"
-          className="z-[100] md:absolute md:top-7 md:left-0 blurFilterNav navbar__list bg-darkMainBG/25 translate-x-80 md:dark:bg-transparent md:bg-transparent dark:bg-lightMainBG/25 md:translate-x-0 transition  duration-1000 ease-in-out overflow-y-auto md:overflow-visible "
+          className="z-100 md:absolute md:top-2 md:left-0 blurFilterNav navbar__list bg-darkMainBG/25 translate-x-80 md:dark:bg-transparent md:bg-transparent dark:bg-lightMainBG/25 md:translate-x-0 transition  duration-1000 ease-in-out overflow-y-auto md:overflow-visible "
         >
           {navbarLinks.map((item, index) => {
             return (
@@ -191,8 +191,7 @@ const Navbar = ({ path, locale, children }: Props) => {
         </ul>
 
         <div
-          className={`navbar__right_span z-100 ${
-            burgerState ? 'md:top-0' : 'md:top-7'
+          className={`navbar__right_span z-100  
           }`}
         >
           {!session && (
@@ -201,7 +200,7 @@ const Navbar = ({ path, locale, children }: Props) => {
               aria-label="login button"
               className="  h-6 w-6 mr-3 md:mr-6 md:h-8 md:w-8 rounded-sm outline-none"
               onClick={() => {
-                // signIn();
+                router.push('/login');
               }}
             >
               <div className="group flex  cursor-pointer  hover:scale-110  flex-col items-center ">
@@ -228,19 +227,17 @@ const Navbar = ({ path, locale, children }: Props) => {
             >
               <Link href={'/profile'}>
                 <div className="group h-6 w-6 md:h-8 md:w-8 flex  cursor-pointer  hover:scale-110  flex-col items-center ">
-                  <div className="   group-hover:animate-bounce stroke-lightMainColor dark:stroke-darkMainColor ">
-                    {/* {session.user.image ? (
+                    {userImage ? (
                       <ImgFromDb
-                        url={session.user.image ? session.user.image : ''}
+                        url={userImage}
                         stylings="object-fill rounded-full h-6 w-6 md:h-9 md:w-9"
                         alt="profile picture"
                       />
-                    ) : ( */}
+                    ) : ( 
                       <div className=" h-6 w-6 md:h-8 md:w-8 fill-none rounded-full bg-lightMainBG dark:bg-lightMainColor  stroke-lightMainColor dark:stroke-darkMainColor ">
                         <ShowIcon icon={'DefaultUser'} stroke={'2'} />
                       </div>
-                    {/* )} */}
-                  </div>
+                    )} 
                   <p className="hidden tracking-widest mx-3 transition duration-300 ease-in-out opacity-100 rounded-md text-darkMainColor md:bg-lightMainBG md:dark:bg-lightMainColor md:dark:text-darkMainColor md:text-lightMainColor group-hover:inline-flex md:block md:opacity-0 md:group-hover:opacity-100 ">
                     {'Profile'}
                   </p>

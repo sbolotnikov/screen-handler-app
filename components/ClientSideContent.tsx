@@ -4,8 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useDimensions } from '@/hooks/useDimensions';
 import { useIsClient } from '@/hooks/useIsClient';
-import { NoSSR } from '@/components/NoSSR';
-//import { departmentsArray } from './constants';  Move array to separate file
+import { NoSSR } from '@/components/NoSSR'; 
 
 function ClientSideContent() {
   const windowSize = useDimensions();

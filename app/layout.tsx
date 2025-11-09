@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Lato } from 'next/font/google';
 import localFont from 'next/font/local';
@@ -5,6 +6,8 @@ import './globals.css';
 import './navStyle.css';
 import Navbar from '@/components/Navbar/navbar';
 import { SettingsProvider } from '@/hooks/useSettings'; 
+import { SessionProvider } from 'next-auth/react';
+import { Providers } from './providers';
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -70,7 +73,7 @@ export default function RootLayout({
         sizes="<generated>"
       />
       <body suppressHydrationWarning={true}>
-        <SettingsProvider> 
+        <Providers>
           <main
             id="mainPage"
             className="fixed w-screen h-svh p-0 m-0 items-center justify-center overflow-hidden text-lightMainColor dark:text-darkMainColor bg-lightMainBG dark:bg-darkMainBG"
@@ -79,7 +82,7 @@ export default function RootLayout({
               {children}
             </Navbar>
           </main>
-        </SettingsProvider>
+         </Providers>
       </body>
     </html>
   );

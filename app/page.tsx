@@ -9,7 +9,7 @@ import ChoosePicturesModal from '@/components/ChoosePicturesModal';
 import CountBox from '@/components/CountBox';
 import usePartySettings from '@/hooks/usePartySettings';
 import useComp from '@/hooks/useComp';
-import ChooseMessageModal from '@/components/ChooseMessageModal'; 
+import ChooseMessageModal from '@/components/ChooseMessageModal';
 import {
   collection,
   deleteDoc,
@@ -18,13 +18,14 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db, db2 } from '@/firebase';
-// import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import ChoosePartyModal from '@/components/ChoosePartyModal';
 import AlertMenu from '@/components/alertMenu';
 import ImgFromDb from '@/components/ImgFromDb';
 import PageTableSettings from '@/components/PageTableSettings';
 import { getImagesList } from '@/functions/actions';
 import CoveredInput from '@/components/CoveredInput';
+import { useRouter } from 'next/navigation';
 
 type Props = Record<string, never>;
 
@@ -36,7 +37,8 @@ const Page: React.FC<Props> = () => {
   const [modal5Visible, setModal5Visible] = useState(false);
   const [refreshVar, setRefreshVar] = useState(false);
   const [refreshVar2, setRefreshVar2] = useState(false);
-  // const { data: session } = useSession();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [alertStyle, setAlertStyle] = useState({
     variantHead: '',
     heading: '',
@@ -248,6 +250,9 @@ const Page: React.FC<Props> = () => {
     console.log('list1', list1);
   }
   useEffect(() => {
+    if (!session) {
+      router.push('/login');
+    }
     getCompsArray();
   }, []);
   const onReturnAlert = async (decision1: string) => {
@@ -388,7 +393,7 @@ const Page: React.FC<Props> = () => {
         />
       )}
       {/* {revealCloud && <ChoosePicture onReturn={onReturnPicture} />} */}
-      
+
       <div className="blurFilter border-0 rounded-md p-2 shadow-2xl w-[95%] max-w-[650px] max-h-[85%] h-[85%]  md:w-full md:mt-8 bg-lightMainBG/70 dark:bg-darkMainBG/70">
         <div className="w-full h-full flex flex-col justify-center items-center border rounded-md border-lightMainColor dark:border-darkMainColor relative p-2 overflow-auto">
           {/* {session?.user.role == 'Admin' && ( */}
