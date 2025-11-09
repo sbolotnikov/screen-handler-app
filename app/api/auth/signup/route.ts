@@ -87,6 +87,7 @@ export async function POST(req: Request) {
       emailVerified: `${year}-${month}-${date} ${hour}:${minute}:${second}`,
       role: 'User',
       telephone: null,
+      parties: [], // Initialize with empty parties array
       createdAt: new Date().toISOString(),
     });
 

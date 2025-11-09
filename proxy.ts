@@ -1,8 +1,15 @@
+// @ts-expect-error NextAuth v4 compatibility
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
 export default async function proxy(req: NextRequest) {
-  const session = await getToken({ req });
+  const session = await getToken({ 
+    req, 
+    secret: process.env.NEXTAUTH_SECRET,
+    cookieName: process.env.NODE_ENV === 'production' 
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token'
+  });
 
   if (req.nextUrl.pathname.includes('/admin')) {
     console.log('Admin route access attempt:', {
@@ -10,10 +17,15 @@ export default async function proxy(req: NextRequest) {
       hasSession: !!session,
       userRole: session?.role,
       userEmail: session?.email,
+      fullSession: session, // Debug: log full session object
     });
 
-    if (!session || session.role == 'User') {
-      console.log('Access denied - redirecting to home');
+    if (!session || session.role !== 'Admin') {
+      console.log('Access denied - redirecting to home', {
+        sessionExists: !!session,
+        currentRole: session?.role,
+        requiredRole: 'Admin'
+      });
       return NextResponse.redirect(new URL('/', req.url));
     }
 

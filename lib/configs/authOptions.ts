@@ -11,14 +11,13 @@ import {
 } from 'firebase/firestore';
 import { FirestoreAdapter } from '@auth/firebase-adapter';
 import bcrypt from 'bcryptjs';
-import { type NextAuthOptions, type User } from 'next-auth';
+import { User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import EmailProvider from 'next-auth/providers/email';
 import { html, text } from '@/utils/htmlEmail';
 import { sendEmail } from '@/utils/sendEmail';
 import { db } from '@/firebase';
-
 
 type FirestoreUserData = {
   id?: string | null;
@@ -29,25 +28,41 @@ type FirestoreUserData = {
   role?: string | null;
   telephone?: string | null;
   emailVerified?: string | null;
+  parties?: string[];
 };
 
 type ExtendedUser = User & {
   id?: string | null;
   role?: string | null;
   telephone?: string | null;
+  parties?: string[];
 };
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   // * NO ADAPTER NEEDED - USING MANUAL USER MANAGEMENT
   // Email provider removed to avoid adapter requirement
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
     maxAge: 30 * 24 * 60 * 60,
   },
   // site: process.env.NEXTAUTH_URL,
   jwt: {
     // A secret to use for key generation (you should set this explicitly)
     secret: process.env.NEXTAUTH_SECRET,
+  },
+  
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' 
+        ? '__Secure-next-auth.session-token'
+        : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
 
   providers: [
@@ -57,7 +72,8 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials, req) {
+      // @ts-expect-error NextAuth types compatibility
+      async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
           return null;
         }
@@ -88,18 +104,13 @@ export const authOptions: NextAuthOptions = {
 
         if (!isPasswordValid) {
           return null;
-        } 
-        const userObj: User & {
-          role?: string | null;
-          telephone?: string | null;
-        } = {
-          id: userDoc.id,
+        }
+        const userObj = {
+          id: userDoc.id || '',
           image: userData?.image ?? null,
-          role: userData?.role ?? 'User',
           email: userData?.email ?? credentials.email,
           name: userData?.name ?? null,
-          telephone: userData?.telephone ?? null,
-        };
+        } as User;
 
         return userObj;
       },
@@ -146,11 +157,9 @@ export const authOptions: NextAuthOptions = {
     error: '/login',
   },
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-       
-
-      if (account?.provider === 'google') { 
-
+    // @ts-expect-error NextAuth types compatibility
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
         try {
           // Check if user exists in our Firestore database
           const usersQuery = query(
@@ -178,6 +187,7 @@ export const authOptions: NextAuthOptions = {
               emailVerified: `${year}-${month}-${date} ${hour}:${minute}:${second}`,
               role: 'User',
               googleId: account.providerAccountId,
+              parties: [],
             });
 
             console.log('New Google user created in Firestore');
@@ -192,7 +202,8 @@ export const authOptions: NextAuthOptions = {
 
       return true;
     },
-    session: async ({ session, token }) => {
+    // @ts-expect-error NextAuth types compatibility
+    session: async ({ session }) => {
       const userEmail = session.user?.email;
 
       if (!userEmail) {
@@ -223,10 +234,12 @@ export const authOptions: NextAuthOptions = {
           name: dbUser?.name ?? session.user?.name ?? null,
           id: userDoc?.id,
           telephone: dbUser?.telephone ?? null,
+          parties: dbUser?.parties ?? [],
         },
       };
     },
 
+    // @ts-expect-error NextAuth types compatibility
     jwt: async ({ token, user }) => {
       if (user) {
         const extendedUser = user as ExtendedUser;
@@ -234,12 +247,14 @@ export const authOptions: NextAuthOptions = {
           ...token,
           id: extendedUser.id ?? token.id,
           role: extendedUser.role ?? token.role ?? 'User',
+          parties: extendedUser.parties ?? token.parties ?? [],
         };
       }
 
-      // For subsequent requests, get role from database if not in token
-      if (token.email && !token.role) {
+      // Always fetch fresh role and parties data from database to ensure accuracy
+      if (token.email) {
         try {
+          console.log('JWT callback - fetching data for:', token.email);
           const usersQuery = query(
             collection(db, 'users'),
             where('email', '==', token.email),
@@ -250,11 +265,22 @@ export const authOptions: NextAuthOptions = {
           if (!existingUsersSnapshot.empty) {
             const userDoc = existingUsersSnapshot.docs[0];
             const userData = userDoc.data() as FirestoreUserData;
+            const oldRole = token.role;
             token.role = userData.role || 'User';
             token.id = userDoc.id;
+            token.parties = userData.parties || [];
+            console.log('JWT callback - role update:', {
+              email: token.email,
+              oldRole,
+              newRole: token.role,
+              dbRole: userData.role,
+              parties: token.parties?.length || 0
+            });
+          } else {
+            console.log('JWT callback - user not found in DB:', token.email);
           }
         } catch (error) {
-          console.error('Error fetching user role for JWT:', error);
+          console.error('Error fetching user role and parties for JWT:', error);
         }
       }
 
@@ -262,12 +288,15 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
+    // @ts-expect-error NextAuth types compatibility
     async signIn(message) {
       console.log('Sign in event:', message);
     },
+    // @ts-expect-error NextAuth types compatibility
     async signOut(message) {
       console.log('Sign out event:', message);
     },
+    // @ts-expect-error NextAuth types compatibility
     async createUser(message) {
       console.log('Create user event:', message);
     },

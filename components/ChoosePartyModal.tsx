@@ -1,7 +1,19 @@
-import { useEffect, useState } from 'react';
-import { addDoc, collection, getDocs, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase'; 
+import { useEffect, useState, useCallback } from 'react';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  DocumentData,
+  QueryDocumentSnapshot,
+} from 'firebase/firestore';
+import { db } from '@/firebase';
 import { save_Template } from '@/functions/functions';
+import {
+  getUserAccessibleParties,
+  addPartyAccessToAllUsers,
+  PartyWithAccess,
+} from '@/utils/partyAccess';
+import { useSession } from 'next-auth/react';
 type Props = {
   onReturn: (str: string) => void;
   onAlert: (name: string, id: string) => void;
@@ -41,12 +53,90 @@ type PartyType = {
   particleTypes: string[];
 };
 const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
+  const { data: session } = useSession();
   const [parties, setParties] = useState<PartyType[]>([]);
   const [choosenParty, setChoosenParty] = useState<string>('');
   const [visibleInput, setVisibleInput] = useState(false);
   const [partyName, setPartyName] = useState<string>('');
 
-  async function getPartyArray() {
+  const getPartyArray = useCallback(async () => {
+    if (!session?.user?.email) {
+      console.log('No user session found');
+      return;
+    }
+
+    try {
+      // Use the new party access function
+      const accessibleParties = await getUserAccessibleParties(
+        session.user.email
+      );
+
+      const formattedParties = accessibleParties.map((party) => ({
+        ...party,
+        // Ensure all required PartyType fields are present with defaults
+        image: (party.image as string) || '',
+        name: (party.name as string) || '',
+        message: (party.message as string) || '',
+        mode: (party.mode as string) || 'Default',
+        fontSize: (party.fontSize as number) || 10,
+        displayedPictures:
+          (party.displayedPictures as {
+            link: string;
+            name: string;
+            dances: string[];
+          }[]) || [],
+        displayedVideos:
+          (party.displayedVideos as {
+            name: string;
+            image: string;
+            link: string;
+            dances: string[];
+          }[]) || [],
+        videoChoice: (party.videoChoice as { link: string; name: string }) || {
+          link: '',
+          name: '',
+        },
+        compLogo: (party.compLogo as { link: string; name: string }) || {
+          link: '',
+          name: '',
+        },
+        titleBarHider: (party.titleBarHider as boolean) || false,
+        showUrgentMessage: (party.showUrgentMessage as boolean) || false,
+        showSVGAnimation: (party.showSVGAnimation as boolean) || false,
+        displayedPicturesAuto:
+          (party.displayedPicturesAuto as { link: string; name: string }[]) ||
+          [],
+        seconds: (party.seconds as number) || 5,
+        manualPicture: (party.manualPicture as {
+          link: string;
+          name: string;
+        }) || { link: '', name: '' },
+        savedMessages: (party.savedMessages as string[]) || [],
+        textColor: (party.textColor as string) || '#000000',
+        animationSpeed: (party.animationSpeed as number) || 3,
+        speedVariation: (party.speedVariation as number) || 0.4,
+        particleCount: (party.particleCount as number) || 100,
+        maxSize: (party.maxSize as number) || 20,
+        animationOption: (party.animationOption as number) || 0,
+        rainAngle: (party.rainAngle as number) || 0,
+        originX: (party.originX as number) || 400,
+        originY: (party.originY as number) || 400,
+        particleTypes: (party.particleTypes as string[]) || [],
+      })) as PartyType[];
+
+      if (formattedParties.length > 0) {
+        setChoosenParty(formattedParties[0].id);
+      }
+      setParties(formattedParties);
+    } catch (error) {
+      console.error('Error loading accessible parties:', error);
+      // Fallback to old method if needed
+      await getPartyArrayFallback();
+    }
+  }, [session?.user?.email]);
+
+  // Fallback method (original implementation)
+  async function getPartyArrayFallback() {
     const q = await getDocs(collection(db, 'parties'));
     interface FirestoreDocData {
       image: string;
@@ -82,38 +172,33 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
       particleTypes: string[];
     }
 
-    const arr1 = q.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => doc.data() as FirestoreDocData);
-    const arr2 = q.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => doc.id);
+    const arr1 = q.docs.map(
+      (doc: QueryDocumentSnapshot<DocumentData>) =>
+        doc.data() as FirestoreDocData
+    );
+    const arr2 = q.docs.map(
+      (doc: QueryDocumentSnapshot<DocumentData>) => doc.id
+    );
     interface PartyWithId extends FirestoreDocData {
       id: string;
     }
 
-    const arr = arr1.map((x: FirestoreDocData, i: number): PartyWithId => ({ ...x, id: arr2[i] })) as PartyType[];
+    const arr = arr1.map(
+      (x: FirestoreDocData, i: number): PartyWithId => ({ ...x, id: arr2[i] })
+    ) as PartyType[];
     arr.sort((a, b) => a.name.localeCompare(b.name));
-    console.log(arr);
-    setChoosenParty(arr[0].id);
+
+    if (arr.length > 0) {
+      setChoosenParty(arr[0].id);
+    }
     setParties(arr);
   }
 
   useEffect(() => {
-    // if (snapshot) {
-    //   let arr: PartyContextType[] = [];
-    //   snapshot.docs.forEach((doc1) => {
-    //     arr.push({
-    //       ...(doc1.data() as any),
-    //       id: doc1.id,
-    //     });
-    //   });
-    //   const filteredParty = arr.find((x) => x.id === compID);
-    //   if (filteredParty) {
-    //     let party
-    //     setPartyArray(filteredParty);
-
-    // console.log("got object",filteredParty)
-    //   }
-    // }
-    getPartyArray();
-  }, []);
+    if (session?.user?.email) {
+      getPartyArray();
+    }
+  }, [session?.user?.email, getPartyArray]); // Include getPartyArray dependency
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -121,18 +206,26 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
     const file1 = e.currentTarget.files![0];
 
     const reader = new FileReader();
-    reader.onload = (function (file) {
+    reader.onload = (function () {
       return async function () {
         const res = this.result?.toString();
         const resObj = JSON.parse(res !== undefined ? res : '');
         delete resObj.id;
 
-        const partyRef = collection(db, 'parties');
+        try {
+          const partyRef = collection(db, 'parties');
+          const docRef = await addDoc(partyRef, resObj);
 
-        await addDoc(partyRef, resObj);
-        location.reload();
+          // Grant access to all users for the loaded party
+          await addPartyAccessToAllUsers(docRef.id);
+
+          console.log('Party loaded and access granted to all users');
+          location.reload();
+        } catch (error) {
+          console.error('Error loading party:', error);
+        }
       };
-    })(file1);
+    })();
     reader.readAsText(file1);
   };
 
@@ -148,7 +241,11 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
       >
         {parties.map((party, index) => {
           return (
-            <option key={index} value={party.id} className='text-lightMainColor bg-lightMainBG dark:text-darkMainColor dark:bg-darkMainBG'>
+            <option
+              key={index}
+              value={party.id}
+              className="text-lightMainColor bg-lightMainBG dark:text-darkMainColor dark:bg-darkMainBG"
+            >
               {party.name}
             </option>
           );
@@ -239,7 +336,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   mode: 'Default',
                   fontSize: 10,
                   fontSizeTime: 10,
-                  frameStyle:"No frame",
+                  frameStyle: 'No frame',
                   displayedPictures: [],
                   displayedVideos: [],
                   videoChoice: { link: '', name: '' },
@@ -287,10 +384,19 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   heat: '',
                   particleTypes: [],
                 };
-                const partyRef = collection(db, 'parties');
 
-                await addDoc(partyRef, resObj);
-                location.reload();
+                try {
+                  const partyRef = collection(db, 'parties');
+                  const docRef = await addDoc(partyRef, resObj);
+
+                  // Grant access to all users for the new party
+                  await addPartyAccessToAllUsers(docRef.id);
+
+                  console.log('Party created and access granted to all users');
+                  location.reload();
+                } catch (error) {
+                  console.error('Error creating party:', error);
+                }
               }}
             >
               Submit
