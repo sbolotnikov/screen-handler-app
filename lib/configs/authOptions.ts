@@ -18,8 +18,7 @@ import EmailProvider from 'next-auth/providers/email';
 import { html, text } from '@/utils/htmlEmail';
 import { sendEmail } from '@/utils/sendEmail';
 import { db } from '@/firebase';
-import { validateGoogleAuthEnv } from '@/lib/validate-env';
-import { testFirebaseConnection } from '@/lib/test-firebase';
+
 
 type FirestoreUserData = {
   id?: string | null;
