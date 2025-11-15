@@ -2,6 +2,7 @@
 
 import AnimateModalLayout from '@/components/AnimateModalLayout';
 import ShowIcon from '@/components/svg/showIcon';
+import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
 interface Video {
@@ -100,10 +101,13 @@ const ChooseVideosModal: React.FC<ChooseVideosModalProps> = ({
                     className="m-1 mr-4 flex flex-col items-center"
                   >
                     <div className="relative">
-                      <img
-                        src={item.image}
+                      {item.image.length > 0 ? (
+                        <Image
                         alt={item.name}
+                        width={80}
+                        height={80}
                         className="h-16 w-16 md:h-20 md:w-20 bg-gray-300 p-2 rounded-sm"
+                        src={item.image}
                         onClick={() => {
                           setVideoLinkType('Regular link');
                           setVideoLink(item.link);
@@ -111,7 +115,8 @@ const ChooseVideosModal: React.FC<ChooseVideosModalProps> = ({
                           setVideoThumbnailLink(item.image);
                           setVideoDances(item.dances || []);
                         }}                       
-                      />
+                      />):(
+                      <Image src="/images/backdrop.png" alt="Default backdrop" width={80} height={80} className="h-16 w-16 md:h-20 md:w-20 bg-gray-300 p-2 rounded-sm" />)}
 
                       <button
                         onClick={() => removeVideo(i)}

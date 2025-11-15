@@ -41,6 +41,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'img.youtube.com',
+        port: '',
+        pathname: '/vi/**',
+      }
     ],
   },
   // Set turbopack root to resolve workspace warnings

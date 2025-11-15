@@ -26,6 +26,14 @@ type Props = {
         
         const activeTable = parseInt(message.split('.')[0]) - 1;
         const activeRow = parseInt(message.split('.')[1]) - 1;
+         if (isNaN(activeTable) || isNaN(activeRow)) {
+            console.warn("Invalid table or row number in message:", message);
+            return { image: compLogo, text1: '' };
+        }
+         if ( activeTable < 0 || activeRow < 0 || activeTable >= tablePages.length || activeRow >= (tablePages[activeTable].tableRows?.length || 0)) {
+            console.warn("Invalid table or row number in message:", message);
+            return { image: compLogo, text1: '' };
+        }
         
         const calculatedImage = ((tablePages[activeTable]?.rowsPictures !== undefined) && (tablePages[activeTable].rowsPictures[activeRow] !== undefined)) 
           ? tablePages[activeTable].rowsPictures[activeRow] 
