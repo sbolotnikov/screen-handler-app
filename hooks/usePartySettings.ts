@@ -1,5 +1,5 @@
 "use client"
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState } from 'react';
 import {   doc,  } from 'firebase/firestore';
 import { db } from '@/firebase'; 
 import { useDocument } from 'react-firebase-hooks/firestore';
@@ -30,6 +30,7 @@ interface PartyContextType {
   tablePages:{name:string, tableRows:string[],rowsPictures:string[] | undefined; rowsChecked:boolean[]}[];
   tableChoice:number;
   showHeatNumber: boolean;
+  heatNum:string ;
   showSVGAnimation: boolean;
   showBackdrop: boolean;
   displayedPicturesAuto: { link: string; name: string }[];
@@ -76,6 +77,7 @@ interface ReturnPartyContextType {
   tablePages:{name:string, tableRows:string[],rowsPictures:string[] | undefined; rowsChecked:boolean[]}[]
   tableChoice:number;
   showHeatNumber: boolean;
+  heatNum:string;
   showBackdrop: boolean;
   showSVGAnimation: boolean;
   displayedPicturesAuto: { link: string; name: string }[];
@@ -102,7 +104,7 @@ export const PartyContext = createContext<ReturnPartyContextType >({} as ReturnP
 
 export default function usePartySettings(): ReturnPartyContextType {
   const [compID, setCompID] = useState('00'); 
-  const [partyArray, setPartyArray] = useState<PartyContextType>({
+  const partyArray: PartyContextType = {
     image: '',
     name: '', 
     message: '',
@@ -123,6 +125,7 @@ export default function usePartySettings(): ReturnPartyContextType {
     tablePages:[{name:"", tableRows:[""],rowsPictures: undefined, rowsChecked:[false]}],
     tableChoice:0,
     showHeatNumber:false,
+    heatNum:"",
     showSVGAnimation:false,
     showBackdrop:false,
     displayedPicturesAuto:[],  
@@ -142,7 +145,7 @@ export default function usePartySettings(): ReturnPartyContextType {
     originY: 0, 
     compChoice:"112",
     particleTypes:["star","kiss",'snowflake', 'heart', 'tower','LP',"maple",'rose','diamond','clover','streamer','lightning','hydrangea','fred'],
-  });
+  };
   
     
  
@@ -154,20 +157,11 @@ export default function usePartySettings(): ReturnPartyContextType {
   );
  
    
-
-  useEffect(() => {
-    if (value) { 
-      let party = {...value.data(), id:compID, } as PartyContextType;
-      setPartyArray(party);
-    }
-    if (error) console.log('error', error);
-  }, [value, compID, error]);
+  const party = value ? {...value.data(), id:compID, } as PartyContextType : partyArray;
   
+  if (error) console.log('error', error);
   
- 
-
- 
-  return {...partyArray, setCompID};
+  return {...party, setCompID};
 }
   
 

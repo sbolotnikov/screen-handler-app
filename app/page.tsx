@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageWrapper } from '@/components/page-wrapper';
 import ChooseVideosModal from '@/components/ChooseVideosModal';
 import ShowPlayingModal from '@/components/ShowPlayingModal';
@@ -26,6 +26,7 @@ import PageTableSettings from '@/components/PageTableSettings';
 import { getImagesList } from '@/functions/actions';
 import CoveredInput from '@/components/CoveredInput';
 import { useRouter } from 'next/navigation';
+import ParsedHeatEditor from '@/components/ParsedHeatEditor';
 
 type Props = Record<string, never>;
 
@@ -52,7 +53,7 @@ const Page: React.FC<Props> = () => {
   const [revealAlert, setRevealAlert] = useState(false);
   const [idToDelete, setIdToDelete] = useState('');
   const [galleryType, setGalleryType] = useState<'auto' | 'manual' | null>(
-    null
+    null,
   );
   const [galleryArr, setGalleryArr] = useState<
     {
@@ -67,7 +68,7 @@ const Page: React.FC<Props> = () => {
   const [editFirstMessage, setEditFirstMessage] = useState(true);
 
   useEffect(() => {
-    let timerInterval: any;
+    let timerInterval: NodeJS.Timeout | undefined;
     if (modalVisible) {
       timerInterval = setInterval(function () {
         setRefreshVar((prev) => !prev);
@@ -101,6 +102,7 @@ const Page: React.FC<Props> = () => {
     tablePages,
     tableChoice,
     showHeatNumber,
+    heatNum,
     savedMessages,
     textColor,
     colorBG,
@@ -119,11 +121,7 @@ const Page: React.FC<Props> = () => {
     showBackdrop,
     setCompID,
   } = usePartySettings();
-  const [competition, setCompetition] = useState('T9FLgtEDmxQFYFTnfrvO');
-  const { heat } = useComp(competition);
-  useEffect(() => {
-    if (compChoice) setCompetition(compChoice);
-  }, [compChoice]);
+  const { heat } = useComp(compChoice || 'T9FLgtEDmxQFYFTnfrvO');
   const typesSet = [
     'star',
     'kiss',
@@ -203,7 +201,7 @@ const Page: React.FC<Props> = () => {
           rowsPictures: string[] | undefined;
           rowsChecked: boolean[];
         }[],
-    eventName: string
+    eventName: string,
   ) => {
     // if (session?.user.role == 'Admin')
     updateDoc(doc(db, 'parties', id), {
@@ -220,7 +218,7 @@ const Page: React.FC<Props> = () => {
       particleTypes.includes(type)
         ? particleTypes.filter((t) => t !== type)
         : [...particleTypes, type],
-      'particleTypes'
+      'particleTypes',
     );
   };
   const fetchConfig = () => {
@@ -236,7 +234,7 @@ const Page: React.FC<Props> = () => {
         console.log(data);
       });
   };
-  async function getCompsArray() {
+  const getCompsArray = useCallback(async () => {
     const q = await getDocs(collection(db2, 'competitions'));
     const arr1 = q.docs.map((doc) => doc.data());
     const arr2 = q.docs.map((doc) => doc.id);
@@ -248,13 +246,16 @@ const Page: React.FC<Props> = () => {
     fetchConfig();
     const list1 = await getImagesList();
     console.log('list1', list1);
-  }
+  }, []);
   useEffect(() => {
     if (!session) {
       router.push('/login');
+    } else {
+      (async () => {
+        await getCompsArray();
+      })();
     }
-    getCompsArray();
-  }, []);
+  }, [session, router, getCompsArray]);
   const onReturnAlert = async (decision1: string) => {
     setRevealAlert(false);
     if (decision1 == 'Cancel') {
@@ -262,20 +263,6 @@ const Page: React.FC<Props> = () => {
     if (decision1 == 'Delete Party') {
       await deleteDoc(doc(db, 'parties', idToDelete));
       window.location.reload();
-    }
-  };
-
-  const onReturnPicture = (decision1: string, fileLink: string) => {
-    if (decision1 == 'Close') {
-      setRevealCloud(false);
-    }
-    if (decision1 == 'Upload') {
-      console.log('file link', fileLink);
-      handleChange(fileLink, 'image');
-      if (revealCloud == true) {
-        setRevealCloud(false);
-        // setFile(fileLink);
-      }
     }
   };
 
@@ -341,7 +328,7 @@ const Page: React.FC<Props> = () => {
           colorBG={colorBG}
           animationSpeed={animationSpeed}
           speedVariation={speedVariation}
-          heat={heat}
+          heat={heatNum}
           particleCount={particleCount}
           maxSize={maxSize}
           animationOption={animationOption}
@@ -362,12 +349,14 @@ const Page: React.FC<Props> = () => {
           vis={modal3Visible}
           onReturn={(ret) => {
             if (ret && ret.length > 0) {
-              galleryType === 'auto'
-                ? handleChange(
-                    ret.map((pic) => ({ link: pic.link, name: pic.name })),
-                    'displayedPicturesAuto'
-                  )
-                : handleChange(ret, 'displayedPictures');
+              if (galleryType === 'auto') {
+                handleChange(
+                  ret.map((pic) => ({ link: pic.link, name: pic.name })),
+                  'displayedPicturesAuto',
+                );
+              } else {
+                handleChange(ret, 'displayedPictures');
+              }
             }
             setModal3Visible(false);
           }}
@@ -545,7 +534,7 @@ const Page: React.FC<Props> = () => {
                       value={manualPicture?.name || ''}
                       onChange={(e) => {
                         const selectedPicture = displayedPictures.find(
-                          (pic) => pic.name === e.target.value
+                          (pic) => pic.name === e.target.value,
                         );
                         if (selectedPicture) {
                           handleChange(
@@ -553,7 +542,7 @@ const Page: React.FC<Props> = () => {
                               name: selectedPicture.name,
                               link: selectedPicture.link,
                             },
-                            'manualPicture'
+                            'manualPicture',
                           );
                         }
                       }}
@@ -572,26 +561,28 @@ const Page: React.FC<Props> = () => {
                     </p>
                   </div>
                 )}
-                <div className="w-full flex flex-col justify-center items-center">
-                  <div className="flex flex-row mb-5">
-                    <input
-                      type="checkbox"
-                      checked={titleBarHider}
-                      onChange={(e) =>
-                        handleChange(e.target.checked, 'titleBarHider')
-                      }
-                      className="self-center"
-                    />
-                    <p className="ml-2">Hide Title Bar</p>
+                {titleBarHider !== undefined && (
+                  <div className="w-full flex flex-col justify-center items-center">
+                    <div className="flex flex-row mb-5">
+                      <input
+                        type="checkbox"
+                        checked={titleBarHider}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'titleBarHider')
+                        }
+                        className="self-center"
+                      />
+                      <p className="ml-2">Hide Title Bar</p>
+                    </div>
                   </div>
-                </div>
+                )}
                 {displayedPictures && (
                   <div className="w-full flex flex-col justify-center items-center">
                     <select
                       value={compLogo?.name || ''}
                       onChange={(e) => {
                         const selectedLogo = displayedPictures.find(
-                          (pic) => pic.name === e.target.value
+                          (pic) => pic.name === e.target.value,
                         );
                         if (selectedLogo) {
                           handleChange(
@@ -599,7 +590,7 @@ const Page: React.FC<Props> = () => {
                               name: selectedLogo.name,
                               link: selectedLogo.link,
                             },
-                            'compLogo'
+                            'compLogo',
                           );
                         }
                       }}
@@ -626,7 +617,7 @@ const Page: React.FC<Props> = () => {
                       value={videoChoice.name}
                       onChange={(e) => {
                         const selectedVideo = displayedVideos.find(
-                          (video) => video.name === e.target.value
+                          (video) => video.name === e.target.value,
                         );
                         if (selectedVideo) {
                           handleChange(
@@ -634,7 +625,7 @@ const Page: React.FC<Props> = () => {
                               name: selectedVideo.name,
                               link: selectedVideo.link,
                             },
-                            'videoChoice'
+                            'videoChoice',
                           );
                         }
                       }}
@@ -653,7 +644,7 @@ const Page: React.FC<Props> = () => {
                 )}
                 <div className="w-full flex flex-row justify-between items-center">
                   <button
-                    className="btnFancy w-20 min-h-[5rem] "
+                    className="btnFancy w-20 min-h-20 "
                     style={{ padding: 0, margin: 0 }}
                     onClick={(e) => {
                       e.preventDefault();
@@ -668,7 +659,7 @@ const Page: React.FC<Props> = () => {
                     </p>
                   </button>
                   <button
-                    className="btnFancy w-20 min-h-[5rem]"
+                    className="btnFancy w-20 min-h-20"
                     style={{ padding: 0, margin: 0 }}
                     onClick={(e) => {
                       e.preventDefault();
@@ -678,7 +669,7 @@ const Page: React.FC<Props> = () => {
                           displayedPicturesAuto.map((pic) => ({
                             ...pic,
                             dances: null,
-                          }))
+                          })),
                         );
                       setModal3Visible(true);
                     }}
@@ -688,7 +679,7 @@ const Page: React.FC<Props> = () => {
                     </p>
                   </button>
                   <button
-                    className="btnFancy w-20 min-h-[5rem]"
+                    className="btnFancy w-20 min-h-20"
                     style={{ padding: 0, margin: 0 }}
                     onClick={(e) => {
                       e.preventDefault();
@@ -720,7 +711,7 @@ const Page: React.FC<Props> = () => {
                           <option key={option} value={option}>
                             {option}
                           </option>
-                        )
+                        ),
                       )}
                     </select>
 
@@ -767,26 +758,30 @@ const Page: React.FC<Props> = () => {
                   </div>
                 </div>
                 <div className="w-full flex flex-col justify-center items-center">
+                  {showUrgentMessage !== undefined && (
+                    <div className="flex flex-row mb-2.5 mt-2.5">
+                      <input
+                        type="checkbox"
+                        checked={showUrgentMessage}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'showUrgentMessage')
+                        }
+                        className="self-center"
+                      />
+                      <p className="ml-2">Show Urgent Message</p>
+                    </div>
+                  )}
                   <div className="flex flex-row mb-2.5 mt-2.5">
-                    <input
-                      type="checkbox"
-                      checked={showUrgentMessage}
-                      onChange={(e) =>
-                        handleChange(e.target.checked, 'showUrgentMessage')
-                      }
-                      className="self-center"
-                    />
-                    <p className="ml-2">Show Urgent Message</p>
-                  </div>
-                  <div className="flex flex-row mb-2.5 mt-2.5">
-                    <input
-                      type="checkbox"
-                      checked={showTable}
-                      onChange={(e) =>
-                        handleChange(e.target.checked, 'showTable')
-                      }
-                      className="self-center"
-                    />
+                    {showTable !== undefined && (
+                      <input
+                        type="checkbox"
+                        checked={showTable}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'showTable')
+                        }
+                        className="self-center"
+                      />
+                    )}
                     <p className="ml-2">Show Table</p>
                   </div>
                   <select
@@ -812,28 +807,44 @@ const Page: React.FC<Props> = () => {
                   />
 
                   <div className="flex flex-row mb-2.5 mt-2.5">
-                    <input
-                      type="checkbox"
-                      checked={showBackdrop}
-                      onChange={(e) =>
-                        handleChange(e.target.checked, 'showBackdrop')
-                      }
-                      className="self-center"
-                    />
+                    {showBackdrop !== undefined && (
+                      <input
+                        type="checkbox"
+                        checked={showBackdrop}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'showBackdrop')
+                        }
+                        className="self-center"
+                      />
+                    )}
                     <p className="ml-2">Show backdrop</p>
                   </div>
                   <div className="flex flex-row mb-2.5 mt-2.5">
-                    <input
-                      type="checkbox"
-                      checked={showHeatNumber}
-                      onChange={(e) =>
-                        handleChange(e.target.checked, 'showHeatNumber')
-                      }
-                      className="self-center"
-                    />
+                    {showHeatNumber !== undefined && (
+                      <input
+                        type="checkbox"
+                        checked={showHeatNumber}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'showHeatNumber')
+                        }
+                        className="self-center"
+                      />
+                    )}
                     <p className="ml-2">Show heat number</p>
                   </div>
 
+                  <div className="flex flex-row mb-2.5 mt-2.5">
+                    {heatNum !== undefined && (
+                      <ParsedHeatEditor
+                        str1={heatNum}
+                        arrOfOpt={['Heat', 'Solo', 'Pro', 'Awards']}
+                        onChange={(value) => {
+                          if (value) handleChange(value, 'heatNum');
+                        }}
+                      />
+                    )}
+                  </div>
+                  <p className="ml-2 text-center w-full">{heatNum}</p>
                   <div className="flex flex-row justify-center items-center">
                     <div className="flex flex-col justify-center items-center">
                       {compsArr && (
@@ -893,14 +904,16 @@ const Page: React.FC<Props> = () => {
                     </div>
                   </div>
                   <div className="flex flex-row mb-2.5 mt-2.5">
-                    <input
-                      type="checkbox"
-                      checked={showSVGAnimation}
-                      onChange={(e) =>
-                        handleChange(e.target.checked, 'showSVGAnimation')
-                      }
-                      className="self-center"
-                    />
+                    {showSVGAnimation !== undefined && (
+                      <input
+                        type="checkbox"
+                        checked={showSVGAnimation}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'showSVGAnimation')
+                        }
+                        className="self-center"
+                      />
+                    )}
                     <p className="ml-2">Show SVG Animation</p>
                   </div>
                   {showSVGAnimation && (
@@ -916,7 +929,7 @@ const Page: React.FC<Props> = () => {
                           onChange={(e) =>
                             handleChange(
                               Number(e.target.value),
-                              'animationSpeed'
+                              'animationSpeed',
                             )
                           }
                         />
@@ -933,7 +946,7 @@ const Page: React.FC<Props> = () => {
                           onChange={(e) =>
                             handleChange(
                               Number(e.target.value),
-                              'speedVariation'
+                              'speedVariation',
                             )
                           }
                         />
@@ -950,7 +963,7 @@ const Page: React.FC<Props> = () => {
                           onChange={(e) =>
                             handleChange(
                               Number(e.target.value),
-                              'particleCount'
+                              'particleCount',
                             )
                           }
                         />
@@ -975,7 +988,7 @@ const Page: React.FC<Props> = () => {
                           onChange={(e) =>
                             handleChange(
                               Number(e.target.value),
-                              'animationOption'
+                              'animationOption',
                             )
                           }
                         >

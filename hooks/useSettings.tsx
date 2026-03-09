@@ -3,7 +3,7 @@ import {
   ScreenSettingsContextType,
  
 } from '@/types/types';
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState } from 'react';
 type Props = {
   children?: React.ReactNode;
 };
