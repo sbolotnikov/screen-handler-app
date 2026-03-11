@@ -120,6 +120,7 @@ const Page: React.FC<Props> = () => {
     compChoice,
     showBackdrop,
     setCompID,
+    unmuteVideos,
   } = usePartySettings();
   const { heat } = useComp(compChoice || 'T9FLgtEDmxQFYFTnfrvO');
   const typesSet = [
@@ -339,6 +340,7 @@ const Page: React.FC<Props> = () => {
           particleTypes={particleTypes}
           onReturn={() => setModalVisible(false)}
           onRenewInterval={() => setRefreshVar2(!refreshVar2)}
+          unmuteVideos={unmuteVideos}
         />
       )}
       {galleryType && (
@@ -689,7 +691,7 @@ const Page: React.FC<Props> = () => {
                     <p className="text-center text-sm italic">Choose videos</p>
                   </button>
                   <button
-                    className="btnFancy w-20 min-h-[5rem]"
+                    className="btnFancy w-20 min-h-20"
                     style={{ padding: 0, margin: 0 }}
                     onClick={(e) => {
                       e.preventDefault();
@@ -832,7 +834,19 @@ const Page: React.FC<Props> = () => {
                     )}
                     <p className="ml-2">Show heat number</p>
                   </div>
-
+<div className="flex flex-row mb-2.5 mt-2.5">
+                    {unmuteVideos !== undefined && (
+                      <input
+                        type="checkbox"
+                        checked={unmuteVideos}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'unmuteVideos')
+                        }
+                        className="self-center"
+                      />
+                    )}
+                    <p className="ml-2">Unmute Videos</p>
+                  </div>
                   <div className="flex flex-row mb-2.5 mt-2.5">
                     {heatNum !== undefined && (
                       <ParsedHeatEditor

@@ -33,6 +33,7 @@ interface PartyContextType {
   heatNum:string ;
   showSVGAnimation: boolean;
   showBackdrop: boolean;
+  unmuteVideos: boolean;
   displayedPicturesAuto: { link: string; name: string }[];
   seconds: number;
   manualPicture: { link: string; name: string };
@@ -62,6 +63,7 @@ interface ReturnPartyContextType {
   fontSize: number;
   fontSizeTime: number;
   frameStyle: string;
+  unmuteVideos: boolean;
   displayedPictures: { link: string; name: string, dances:string[] }[];
   displayedVideos: {
     name: string;
@@ -122,6 +124,7 @@ export default function usePartySettings(): ReturnPartyContextType {
     titleBarHider:false,
     showUrgentMessage:false,
     showTable:false,
+    unmuteVideos:false,
     tablePages:[{name:"", tableRows:[""],rowsPictures: undefined, rowsChecked:[false]}],
     tableChoice:0,
     showHeatNumber:false,

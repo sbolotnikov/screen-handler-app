@@ -59,6 +59,8 @@ type PartyType = {
   rainAngle: number;
   originX: number;
   originY: number;
+    heatNum: string;
+    unmutedVideos: boolean;
   particleTypes: string[];
   tablePages: TablePage[];
 };
@@ -94,7 +96,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
         frameStyle: (party.frameStyle as string) || 'No frame',
         heatNum: (party.heatNum as string) || 'Heat 1',
         colorBG: (party.colorBG as string) || '#FFFFFF',
-
+        unmutedVideos: (party.unmutedVideos as boolean) || false,
         displayedPictures:
           (party.displayedPictures as {
             link: string;
@@ -142,6 +144,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
         showTable: (party.showTable as boolean) || false,
         showHeatNumber: (party.showHeatNumber as boolean) || false,
         showBackdrop: (party.showBackdrop as boolean) || false,
+        unmuteVideos: (party.unmuteVideos as boolean) || false,
       })) as PartyType[];
 
       if (formattedParties.length > 0) {
@@ -539,6 +542,12 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   originX: 400,
                   originY: 400,
                   heat: '',
+                  heatNum: 'Heat 1',
+                  unmutedVideos: false,
+                  colorBG: '#FFFFFF',
+                  showTable: false,
+                  
+                  showBackdrop: false,
                   particleTypes: [],
                   tablePages: copiedData.tablePages || [],
                 };
