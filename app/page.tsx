@@ -839,7 +839,7 @@ const Page: React.FC<Props> = () => {
                         str1={heatNum}
                         arrOfOpt={['Heat', 'Solo', 'Pro', 'Awards']}
                         onChange={(value) => {
-                          if (value) handleChange(value, 'heatNum');
+                          if (value !== heatNum) handleChange(value, 'heatNum');
                         }}
                       />
                     )}

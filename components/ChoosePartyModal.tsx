@@ -89,6 +89,12 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
         message: (party.message as string) || '',
         mode: (party.mode as string) || 'Default',
         fontSize: (party.fontSize as number) || 10,
+        fontSize2: (party.fontSize2 as number) || 10,
+        fontSizeTime: (party.fontSizeTime as number) || 10,
+        frameStyle: (party.frameStyle as string) || 'No frame',
+        heatNum: (party.heatNum as string) || 'Heat 1',
+        colorBG: (party.colorBG as string) || '#FFFFFF',
+
         displayedPictures:
           (party.displayedPictures as {
             link: string;
@@ -133,6 +139,9 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
         originY: (party.originY as number) || 400,
         particleTypes: (party.particleTypes as string[]) || [],
         tablePages: (party.tablePages as TablePage[]) || [],
+        showTable: (party.showTable as boolean) || false,
+        showHeatNumber: (party.showHeatNumber as boolean) || false,
+        showBackdrop: (party.showBackdrop as boolean) || false,
       })) as PartyType[];
 
       if (formattedParties.length > 0) {

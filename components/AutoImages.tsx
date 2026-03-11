@@ -40,7 +40,7 @@ type Props = {
         nextActive(0);
       }, []);
       return (
-          <ManualImage image1={picsArray[activePic]} seconds={seconds} fontSizeTime={fontSizeTime} showBackdrop={showBackdrop} text1={ text1} compLogo={compLogo} videoBG={videoBG} titleBarHider={titleBarHider}/>
+          <ManualImage image1={picsArray[activePic]} fontSizeTime={fontSizeTime} showBackdrop={showBackdrop} text1={ text1} compLogo={compLogo} videoBG={videoBG} titleBarHider={titleBarHider}/>
     
       );
     };

@@ -6,7 +6,8 @@ import VideoPlayingComponent from './VideoPlayingComponent';
 import ManualImage from './ManualImage';
 import AutoImages from './AutoImages';
 import FullAutoMode from './FullAutoMode';
-// import { SettingsContext } from '@/hooks/useSettings'; 
+import { SettingsContext } from '@/hooks/useSettings';
+import { ScreenSettingsContextType } from '@/types/screen-settings';
 import { useDimensions } from '@/hooks/useDimensions';
 import svgPath from './svgPath';
 import ImgFromDb from '@/components/ImgFromDb';
@@ -16,9 +17,6 @@ import AnimatedTextMessage from '@/components/AnimatedTextMessage';
 import FrameGlow from '@/components/FrameGlow';
 import TablePage from './TablePage';
 import AutoTableMode from './AutoTableMode';
-
-
-
 
 type Props = {
   videoUri: { link: string; name: string };
@@ -61,6 +59,7 @@ type Props = {
   heat: string;
   showBackdrop: boolean;
   showSVGAnimation: boolean;
+  unmuteVideos:boolean;
   onReturn: (submitten: string) => void;
   onRenewInterval: () => void;
 };
@@ -104,13 +103,14 @@ const ShowPlayingModal: React.FC<Props> = ({
   originY,
   showSVGAnimation,
   particleTypes,
+  unmuteVideos,
   heat,
   onReturn,
   onRenewInterval,
 }) => {
-  // const { changeNav } = useContext(
-  //   SettingsContext
-  // ) as ScreenSettingsContextType;
+  const { changeNav } = useContext(
+    SettingsContext
+  ) as ScreenSettingsContextType;
 
   const [picArrAutoMode, setPicArrAutoMode] = useState<
     { link: string; dances: string[] }[]
@@ -121,7 +121,7 @@ const ShowPlayingModal: React.FC<Props> = ({
   const windowSize = useDimensions();
   const handleSubmit = (e: React.MouseEvent, submitten: string) => {
     e.preventDefault();
-    // changeNav(true);
+    changeNav(true);
     onReturn(submitten);
   };
   const svgRef = useRef<SVGSVGElement>(null);
@@ -175,22 +175,22 @@ const ShowPlayingModal: React.FC<Props> = ({
   }, [textColor]);
   useEffect(() => {
     if (mode === 'Auto Full' && displayedPictures.length > 0) {
-      let arr1 = displayedPictures
+      const arr1 = displayedPictures
         .map((pic) => ({ link: pic.link, dances: pic.dances }))
         .filter(
           (pic) => pic.dances !== null && pic.dances.indexOf(message) >= 0
         );
-      let arr2 = displayedPictures
+      const arr2 = displayedPictures
         .map((pic) => ({ link: pic.link, dances: pic.dances }))
         .filter((pic) => pic.dances !== null && pic.dances.indexOf('All') >= 0);
-      let arr = arr1.concat(arr2);
-      let videoArr1 = displayedVideos.filter(
+      const arr = arr1.concat(arr2);
+      const videoArr1 = displayedVideos.filter(
         (vid) => vid.dances !== null && vid.dances.indexOf(message) >= 0
       );
-      let videoArr2 = displayedVideos.filter(
+      const videoArr2 = displayedVideos.filter(
         (vid) => vid.dances !== null && vid.dances.indexOf('All') >= 0
       );
-      let videoArr = videoArr1.concat(videoArr2);
+      const videoArr = videoArr1.concat(videoArr2);
 
       console.log(message, arr, videoArr);
       setPicArrAutoMode(arr);
@@ -212,7 +212,7 @@ const ShowPlayingModal: React.FC<Props> = ({
           currentDateTime.split(',')[1].split(' ')[2]
       );
     }, 60000);
-    // !vis ? changeNav(false) : changeNav(true);
+    !vis ? changeNav(false) : changeNav(true);
     return () => clearInterval(timerInterval);
   }, [vis, refreshVar]);
 
@@ -470,14 +470,11 @@ const ShowPlayingModal: React.FC<Props> = ({
           const particle1 = document.createElementNS(svgNS, 'path');
           const shape =
             particleTypes1[Math.floor(Math.random() * particleTypes1.length)];
-          const size = Math.random() * maxSize1;
+          
 
           particle1.setAttribute('d', svgPath(shape));
           particle1.setAttribute('fill', `hsl(32, 100%, 50%)`);
-          const animateMotion1 = document.createElementNS(
-            svgNS,
-            'animateMotion'
-          );
+          
           const startX = windowSize.width! * (0.2 + Math.random() * 0.6);
           const startY = windowSize.height! * 0.9;
 
@@ -549,6 +546,7 @@ const ShowPlayingModal: React.FC<Props> = ({
               titleBarHider={titleBarHider}
               showBackdrop={showBackdrop}
               seconds={seconds}
+              unmuteVideos={unmuteVideos}
             />
           )}
           {mode === 'Auto' && (
@@ -606,7 +604,6 @@ const ShowPlayingModal: React.FC<Props> = ({
               showBackdrop={showBackdrop}
               titleBarHider={titleBarHider}
               videoBG={videoUri.link}
-              seconds={seconds}
               fontSizeTime={fontSizeTime}
             />
           )}
@@ -627,7 +624,7 @@ const ShowPlayingModal: React.FC<Props> = ({
               ></div>}
             </div>
           )}
-          {showTable && (<TablePage tablePages={tablePages} tableChoice={tableChoice} fontSize={fontSize} fontSize2={fontSize2} picture1={compLogo.link} picture2={manualPicture.link} fontName={fontName} textColor={textColor}/>)}
+          {showTable && (<TablePage tablePages={tablePages} tableChoice={tableChoice} fontSize={fontSize} fontSize2={fontSize2} picture1={compLogo.link} picture2={manualPicture.link} fontName={fontName} colorBG={colorBG} textColor={textColor}/>)}
           {showSVGAnimation1 && (
             <div className="absolute inset-0 flex justify-center items-center">
               {windowSize.width! > 0 && windowSize.height! > 0 && (
@@ -733,7 +730,7 @@ const ShowPlayingModal: React.FC<Props> = ({
             )}
             {frameStyle === 'Running frame' && (
               <FrameRunnerEffect
-                className={'w-[100%] h-full flex justify-center items-center'}
+                className={'w-full h-full flex justify-center items-center'}
               />
             )}
             {frameStyle === 'No frame' && (

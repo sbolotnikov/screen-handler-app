@@ -143,7 +143,7 @@ const PartyAccessManager = () => {
   const selectedUserData = users.find((u) => u.email === selectedUser);
 
   return (
-    <div className="w-full h-full p-4 text-lightMainColor dark:text-darkMainColor">
+    <div className="w-full p-4 text-lightMainColor dark:text-darkMainColor">
       <h2 className="text-2xl font-bold mb-6 text-center">
         Party Access Management
       </h2>

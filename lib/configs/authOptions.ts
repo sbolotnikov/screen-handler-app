@@ -89,7 +89,7 @@ export const authOptions = {
         if (existingUsersSnapshot.empty) {
           return null;
         }
-
+        console.log('user found, checking password for:', credentials.email);
         const userDoc = existingUsersSnapshot.docs[0];
 
         if (!userDoc) {
@@ -97,15 +97,18 @@ export const authOptions = {
         }
 
         const userData = userDoc.data() as FirestoreUserData;
-
+        console.log('user data retrieved for:', credentials.email, credentials.password, userData);
+        // const salt = parseInt(process.env.BCRYPT_SALT || '12', 10);
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
-          userData?.password ?? ''
+          userData?.password ||""
         );
 
         if (!isPasswordValid) {
+          console.log('invalid password for:', credentials.email);
           return null;
         }
+        console.log("password valid, returning user object for:", credentials.email);
         const userObj = {
           id: userDoc.id || '',
           image: userData?.image ?? null,

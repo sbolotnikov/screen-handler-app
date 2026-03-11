@@ -3,6 +3,7 @@ import { FC } from 'react';
 import { PageWrapper } from '@/components/page-wrapper';
 import ShowIcon from '@/components/svg/showIcon';
 import PartyAccessManager from '@/components/PartyAccessManager';
+import UserRoleManager from '@/components/UserRoleManager';
 
 const Page: FC = ({}) => {
   return (
@@ -28,6 +29,7 @@ const Page: FC = ({}) => {
             {/* Party Access Management Section */}
             <div className="flex-1 overflow-y-auto">
               <PartyAccessManager />
+              <UserRoleManager />
             </div>
           </div>
         </div>

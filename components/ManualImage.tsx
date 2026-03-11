@@ -2,7 +2,6 @@
 import { gsap } from '@/functions/gsap';
 import React, { useEffect, useState } from 'react';
 type Props = {
-  seconds: number;
   image1: string;
   text1: string;
   compLogo: string;
@@ -13,7 +12,6 @@ type Props = {
 };
 
 const ManualImage: React.FC<Props> = ({
-  seconds,
   image1,
   text1,
   fontSizeTime,
@@ -151,4 +149,3 @@ const ManualImage: React.FC<Props> = ({
 };
 
 export default ManualImage;
-

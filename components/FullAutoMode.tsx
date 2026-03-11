@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ManualImage from './ManualImage';
 
 type Props = {
@@ -31,67 +31,73 @@ const FullAutoMode = ({
   const [activePic, setActivePic] = useState(0);
   const [activeVideo, setActiveVideo] = useState(0);
   const [usedPictures, setUsedPictures] = useState<string[]>([]);
-  let timerIntervalID: any;
-  let timerIntervalVideoID: any;
-  const nextActive = (num: number) => {
-    timerIntervalID = window.setTimeout(function () {
-      window.clearTimeout(timerIntervalID);
-      console.log('interval cleared in nextActive pictures', num);  
-      setActivePic(getValidPictureId( picsArray.length));
-      nextActive(num);
-    }, num * 1000);
-  };
-  const nextActiveVideo = (num: number) => {
-    timerIntervalVideoID = window.setTimeout(function () {
-      window.clearTimeout(timerIntervalVideoID);
-      console.log('interval cleared in nextActive video ',num);     
-      setActiveVideo(Math.floor(Math.random()*vidsArray.length));
-      nextActiveVideo(num);
-    }, num * 1000);
-  };
-  const getValidPictureId = (base:number) => {
-    let currentPictureID= Math.floor(Math.random() * base);
-    let index1=0;
-    while ((usedPictures.indexOf(picsArray[currentPictureID].link)!==-1)
-      &&(index1>base)
-    ) {
-      currentPictureID= Math.floor(Math.random() * base);
+  
+  const timerIntervalID = useRef<number | null>(null);
+  const timerIntervalVideoID = useRef<number | null>(null);
+  
+  // Use a ref to always have access to the latest state in the timeout callback
+  const stateRef = useRef({ usedPictures, picsArray, vidsArray, seconds });
+  useEffect(() => {
+    stateRef.current = { usedPictures, picsArray, vidsArray, seconds };
+  }, [usedPictures, picsArray, vidsArray, seconds]);
+
+  const getValidPictureId = () => {
+    const { picsArray: currentPics, usedPictures: currentUsed } = stateRef.current;
+    const base = currentPics.length;
+    if (base === 0) return 0;
+
+    let currentPictureID = Math.floor(Math.random() * base);
+    let index1 = 0;
+    
+    while (currentUsed.indexOf(currentPics[currentPictureID].link) !== -1 && index1 < base) {
+      currentPictureID = Math.floor(Math.random() * base);
       index1++;
     }
-    const arrCopy=usedPictures;
-      arrCopy.push(picsArray[currentPictureID].link);
-      
-    if (arrCopy.length>5){
-      arrCopy.shift();
-    }
-    setUsedPictures(arrCopy)
-    console.log(arrCopy)
-    console.log(picsArray[currentPictureID].link)
-    return currentPictureID
-  }
+
+    const newLink = currentPics[currentPictureID].link;
+    setUsedPictures((prev) => {
+      const next = [...prev, newLink];
+      if (next.length > 5) next.shift();
+      return next;
+    });
+
+    return currentPictureID;
+  };
 
   useEffect(() => {
-    console.log(picsArray);
-    let id = window.setTimeout(function () {}, 0);
-    while (id--) {
-      window.clearTimeout(id); // will do nothing if no timeout with id is present
-    }
-    console.log('interval cleared in useEffect pictures');
+    const interval = Math.max(seconds || 5, 1); // Ensure at least 1s, default 5s
     
+    const tickPictures = () => {
+      setActivePic(getValidPictureId());
+      timerIntervalID.current = window.setTimeout(tickPictures, interval * 1000);
+    };
 
-    setActivePic(getValidPictureId(picsArray.length));
-    nextActive(seconds);
-    console.log(vidsArray);    
-    setActiveVideo(Math.floor(Math.random()*vidsArray.length));
-    nextActiveVideo(seconds*3);
+    const tickVideo = () => {
+      const { vidsArray: currentVids } = stateRef.current;
+      if (currentVids.length > 0) {
+        setActiveVideo(Math.floor(Math.random() * currentVids.length));
+      }
+      timerIntervalVideoID.current = window.setTimeout(tickVideo, interval * 3 * 1000);
+    };
+
+    console.log('Starting FullAutoMode loops with interval:', interval);
+    
+    // Initial calls
+    if (picsArray.length > 0) tickPictures();
+    if (vidsArray.length > 0) tickVideo();
+
     onRenewInterval();
-  }, [vidsArray, picsArray]);
+
+    return () => {
+      if (timerIntervalID.current) window.clearTimeout(timerIntervalID.current);
+      if (timerIntervalVideoID.current) window.clearTimeout(timerIntervalVideoID.current);
+    };
+  }, [picsArray.length, vidsArray.length, seconds]); // Only restart if arrays length or seconds change
   return (
     <>
       {(picsArray[activePic] !== undefined) && (vidsArray[activeVideo] !== undefined)&&(
         <ManualImage
           image1={picsArray[activePic].link}
-          seconds={seconds}
           text1={text1}
           compLogo={compLogo}
           fontSizeTime={fontSizeTime}
@@ -105,4 +111,3 @@ const FullAutoMode = ({
 };
 
 export default FullAutoMode;
-

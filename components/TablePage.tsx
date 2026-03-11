@@ -7,6 +7,7 @@ type Props = {
   tableChoice: number;
   fontSize: number;
   fontSize2: number;
+  colorBG: string;
   textColor: string;
   fontName: string;
   picture1: string;
@@ -18,6 +19,7 @@ const TablePage = ({
   tableChoice,
   fontSize,
   fontSize2,
+  colorBG,
   textColor,
   fontName,
   picture1,

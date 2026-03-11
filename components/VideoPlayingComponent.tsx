@@ -7,6 +7,7 @@ interface VideoPlayingComponentProps {
   text1?: string;
   showBackdrop: boolean;
   titleBarHider?: boolean;
+  unmuteVideos?:boolean;
 }
 
 const VideoPlayingComponent: React.FC<VideoPlayingComponentProps> = ({
@@ -15,6 +16,7 @@ const VideoPlayingComponent: React.FC<VideoPlayingComponentProps> = ({
   text1,
   showBackdrop,
   titleBarHider,
+  unmuteVideos,
 }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -44,7 +46,7 @@ const VideoPlayingComponent: React.FC<VideoPlayingComponentProps> = ({
       ></iframe>: <video
       src={videoUri}
       autoPlay
-      muted
+      muted={!unmuteVideos}
       loop
       className="w-full h-full object-cover"
     >
