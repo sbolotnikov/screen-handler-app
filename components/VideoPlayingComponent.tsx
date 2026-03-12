@@ -39,7 +39,7 @@ const VideoPlayingComponent: React.FC<VideoPlayingComponentProps> = ({
     <div className="w-full h-screen flex justify-start items-center relative">
       {videoUri.length>0 && videoUri.includes("https:")? <iframe
         className="w-full h-full"
-        src={videoUri}
+        src={unmuteVideos? videoUri.split('&mute=1').join(''): videoUri}
         allow="autoplay;fullscreen;"
         frameBorder="0"
         allowFullScreen

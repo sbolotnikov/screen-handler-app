@@ -60,14 +60,14 @@ type PartyType = {
   originX: number;
   originY: number;
     heatNum: string;
-    unmutedVideos: boolean;
+    unmuteVideos: boolean;
   particleTypes: string[];
   tablePages: TablePage[];
 };
 const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
   const { data: session } = useSession();
   const [parties, setParties] = useState<PartyType[]>([]);
-  const [choosenParty, setChoosenParty] = useState<string>('');
+  const [choosenParties, setChoosenParties] = useState<string[]>([]);
   const [visibleInput, setVisibleInput] = useState(false);
   const [partyName, setPartyName] = useState<string>('');
 
@@ -96,7 +96,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
         frameStyle: (party.frameStyle as string) || 'No frame',
         heatNum: (party.heatNum as string) || 'Heat 1',
         colorBG: (party.colorBG as string) || '#FFFFFF',
-        unmutedVideos: (party.unmutedVideos as boolean) || false,
+        unmuteVideos: (party.unmuteVideos as boolean) || false,
         displayedPictures:
           (party.displayedPictures as {
             link: string;
@@ -144,11 +144,10 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
         showTable: (party.showTable as boolean) || false,
         showHeatNumber: (party.showHeatNumber as boolean) || false,
         showBackdrop: (party.showBackdrop as boolean) || false,
-        unmuteVideos: (party.unmuteVideos as boolean) || false,
       })) as PartyType[];
 
       if (formattedParties.length > 0) {
-        setChoosenParty(formattedParties[0].id);
+        setChoosenParties([formattedParties[0].id]);
       }
       setParties(formattedParties);
     } catch (error) {
@@ -213,7 +212,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
     arr.sort((a, b) => a.name.localeCompare(b.name));
 
     if (arr.length > 0) {
-      setChoosenParty(arr[0].id);
+      setChoosenParties([arr[0].id]);
     }
     setParties(arr);
   }
@@ -256,11 +255,17 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
   return (
     <div className="w-full flex flex-col justify-center items-center">
       <select
-        className="w-1/2 p-2"
+        multiple
+        className="w-full md:w-3/4 p-2 h-48 border border-gray-300 rounded mb-4 overflow-y-auto"
         name="parties"
         id="parties"
+        value={choosenParties}
         onChange={(e) => {
-          setChoosenParty(e.target.value);
+          const values = Array.from(
+            e.target.selectedOptions,
+            (option) => option.value
+          );
+          setChoosenParties(values);
         }}
       >
         {parties.map((party, index) => {
@@ -268,47 +273,50 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
             <option
               key={index}
               value={party.id}
-              className="text-lightMainColor bg-lightMainBG dark:text-darkMainColor dark:bg-darkMainBG"
+              className="text-lightMainColor bg-lightMainBG dark:text-darkMainColor dark:bg-darkMainBG p-1"
             >
               {party.name}
             </option>
           );
         })}
       </select>
-      {choosenParty && choosenParty.length > 0 && (
+      {choosenParties.length > 0 && (
         <div className="w-full flex flex-row flex-wrap justify-center items-center">
           <button
             className="btnFancy"
             onClick={() => {
-              onReturn(choosenParty);
+              // If multiple are selected, we pick the first one
+              onReturn(choosenParties[0]);
             }}
           >
-            Use
+            Use {choosenParties.length > 1 ? `(${choosenParties.length})` : ''}
           </button>
           <button
             className="btnFancy"
             onClick={() => {
-              save_Template(
-                JSON.stringify(
-                  parties.filter((party) => party.id == choosenParty)[0]
-                ),
-                'party_' + choosenParty
-              );
+              choosenParties.forEach((id) => {
+                const party = parties.find((p) => p.id === id);
+                if (party) {
+                  save_Template(JSON.stringify(party), 'party_' + id);
+                }
+              });
             }}
           >
-            Save
+            Save {choosenParties.length > 1 ? `(${choosenParties.length})` : ''}
           </button>
 
           <button
             className="btnFancy"
             onClick={() => {
-              onAlert(
-                parties.filter((party) => party.id == choosenParty)[0].name,
-                choosenParty
-              );
+              // Only handle the first one for delete as onAlert shows a modal
+              const firstId = choosenParties[0];
+              const party = parties.find((p) => p.id === firstId);
+              if (party) {
+                onAlert(party.name, firstId);
+              }
             }}
           >
-            Delete
+            Delete {choosenParties.length > 1 ? `(Selected: ${choosenParties.length})` : ''}
           </button>
         </div>
       )}
@@ -356,15 +364,15 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   <h3 className="text-sm font-semibold mb-2 text-gray-700">
                     Copy sections from existing parties (Admin only):
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* displayedPictures */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs">Pictures:</label>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold">Pictures:</label>
                       <select
+                        multiple
                         data-section="displayedPictures"
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        className="w-full p-1 text-xs border border-gray-300 rounded h-24 overflow-y-auto"
                       >
-                        <option value="">Copy from...</option>
                         {parties.map((party) => (
                           <option key={party.id} value={party.id}>
                             {party.name} ({party.displayedPictures.length} pics)
@@ -374,13 +382,13 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                     </div>
 
                     {/* displayedVideos */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs">Videos:</label>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold">Videos:</label>
                       <select
+                        multiple
                         data-section="displayedVideos"
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        className="w-full p-1 text-xs border border-gray-300 rounded h-24 overflow-y-auto"
                       >
-                        <option value="">Copy from...</option>
                         {parties.map((party) => (
                           <option key={party.id} value={party.id}>
                             {party.name} ({party.displayedVideos.length} videos)
@@ -390,13 +398,13 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                     </div>
 
                     {/* displayedPicturesAuto */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs">Auto Pictures:</label>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold">Auto Pictures:</label>
                       <select
+                        multiple
                         data-section="displayedPicturesAuto"
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        className="w-full p-1 text-xs border border-gray-300 rounded h-24 overflow-y-auto"
                       >
-                        <option value="">Copy from...</option>
                         {parties.map((party) => (
                           <option key={party.id} value={party.id}>
                             {party.name} ({party.displayedPicturesAuto.length}{' '}
@@ -407,13 +415,13 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                     </div>
 
                     {/* savedMessages */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs">Messages:</label>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold">Messages:</label>
                       <select
+                        multiple
                         data-section="savedMessages"
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        className="w-full p-1 text-xs border border-gray-300 rounded h-24 overflow-y-auto"
                       >
-                        <option value="">Copy from...</option>
                         {parties.map((party) => (
                           <option key={party.id} value={party.id}>
                             {party.name} ({party.savedMessages.length} messages)
@@ -423,13 +431,13 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                     </div>
 
                     {/* tablePages */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs">Table Pages:</label>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold">Table Pages:</label>
                       <select
+                        multiple
                         data-section="tablePages"
-                        className="flex-1 p-1 text-xs border border-gray-300 rounded"
+                        className="w-full p-1 text-xs border border-gray-300 rounded h-24 overflow-y-auto"
                       >
-                        <option value="">Copy from...</option>
                         {parties.map((party) => (
                           <option key={party.id} value={party.id}>
                             {party.name} ({party.tablePages.length} tables)
@@ -455,38 +463,72 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   const selects = document.querySelectorAll(
                     'select[data-section]'
                   ) as NodeListOf<HTMLSelectElement>;
+
+                  // Use Maps/Sets to deduplicate items by their unique identifiers (usually link, name or id)
+                  const picturesMap = new Map();
+                  const videosMap = new Map();
+                  const autoPicturesMap = new Map();
+                  const messagesSet = new Set<string>();
+                  const tablesMap = new Map();
+
                   selects.forEach((select) => {
                     const section = select.dataset.section;
-                    const selectedPartyId = select.value;
-                    if (selectedPartyId && section) {
-                      const sourceParty = parties.find(
-                        (p) => p.id === selectedPartyId
-                      );
-                      if (sourceParty) {
-                        switch (section) {
-                          case 'displayedPictures':
-                            copiedData.displayedPictures =
-                              sourceParty.displayedPictures;
-                            break;
-                          case 'displayedVideos':
-                            copiedData.displayedVideos =
-                              sourceParty.displayedVideos;
-                            break;
-                          case 'displayedPicturesAuto':
-                            copiedData.displayedPicturesAuto =
-                              sourceParty.displayedPicturesAuto;
-                            break;
-                          case 'savedMessages':
-                            copiedData.savedMessages =
-                              sourceParty.savedMessages;
-                            break;
-                          case 'tablePages':
-                            copiedData.tablePages = sourceParty.tablePages;
-                            break;
+                    const selectedPartyIds = Array.from(select.selectedOptions)
+                      .map((opt) => (opt as HTMLOptionElement).value)
+                      .filter((val) => val !== '');
+
+                    if (selectedPartyIds.length > 0 && section) {
+                      selectedPartyIds.forEach((selectedPartyId) => {
+                        const sourceParty = parties.find(
+                          (p) => p.id === selectedPartyId
+                        );
+                        if (sourceParty) {
+                          switch (section) {
+                            case 'displayedPictures':
+                              sourceParty.displayedPictures.forEach((p) =>
+                                picturesMap.set(p.link, p)
+                              );
+                              break;
+                            case 'displayedVideos':
+                              sourceParty.displayedVideos.forEach((v) =>
+                                videosMap.set(v.link, v)
+                              );
+                              break;
+                            case 'displayedPicturesAuto':
+                              sourceParty.displayedPicturesAuto.forEach((p) =>
+                                autoPicturesMap.set(p.link, p)
+                              );
+                              break;
+                            case 'savedMessages':
+                              sourceParty.savedMessages.forEach((m) =>
+                                messagesSet.add(m)
+                              );
+                              break;
+                            case 'tablePages':
+                              sourceParty.tablePages.forEach((t) =>
+                                tablesMap.set(t.id || t.name, t)
+                              );
+                              break;
+                          }
                         }
-                      }
+                      });
                     }
                   });
+
+                  if (picturesMap.size > 0)
+                    copiedData.displayedPictures = Array.from(
+                      picturesMap.values()
+                    );
+                  if (videosMap.size > 0)
+                    copiedData.displayedVideos = Array.from(videosMap.values());
+                  if (autoPicturesMap.size > 0)
+                    copiedData.displayedPicturesAuto = Array.from(
+                      autoPicturesMap.values()
+                    );
+                  if (messagesSet.size > 0)
+                    copiedData.savedMessages = Array.from(messagesSet);
+                  if (tablesMap.size > 0)
+                    copiedData.tablePages = Array.from(tablesMap.values());
                 }
 
                 const resObj = {
@@ -543,7 +585,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
                   originY: 400,
                   heat: '',
                   heatNum: 'Heat 1',
-                  unmutedVideos: false,
+                  unmuteVideos: false,
                   colorBG: '#FFFFFF',
                   showTable: false,
                   
