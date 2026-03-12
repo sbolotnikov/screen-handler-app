@@ -52,7 +52,7 @@ type Props = {
               className="absolute inset-0 flex flex-col justify-center items-center cursor-pointer "
               
             >
-          <ManualImage image1={image} seconds={0} fontSizeTime={0} showBackdrop={showBackdrop} text1={ ""} compLogo={""} videoBG={""} titleBarHider={true}/>
+          <ManualImage image1={image} fontSizeTime={0} showBackdrop={showBackdrop} text1={ ""} compLogo={""} videoBG={""} titleBarHider={true}/>
           {text1 > '' && (
                           <AnimatedTextMessage
                             text={text1}

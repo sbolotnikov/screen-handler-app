@@ -7,7 +7,7 @@ import ManualImage from './ManualImage';
 import AutoImages from './AutoImages';
 import FullAutoMode from './FullAutoMode';
 import { SettingsContext } from '@/hooks/useSettings';
-import { ScreenSettingsContextType } from '@/types/screen-settings';
+import { ScreenSettingsContextType } from '@/types/types';
 import { useDimensions } from '@/hooks/useDimensions';
 import svgPath from './svgPath';
 import ImgFromDb from '@/components/ImgFromDb';
