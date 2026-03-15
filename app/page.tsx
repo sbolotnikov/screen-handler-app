@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { db, db2 } from '@/firebase';
 import { useSession } from 'next-auth/react';
+import type { Session } from 'next-auth';
 import ChoosePartyModal from '@/components/ChoosePartyModal';
 import AlertMenu from '@/components/alertMenu';
 import ImgFromDb from '@/components/ImgFromDb';
@@ -27,8 +28,18 @@ import { getImagesList } from '@/functions/actions';
 import CoveredInput from '@/components/CoveredInput';
 import { useRouter } from 'next/navigation';
 import ParsedHeatEditor from '@/components/ParsedHeatEditor';
+import EventsDashboard from '@/components/EventsDashboard';
 
 type Props = Record<string, never>;
+
+type ExtendedSession = Session & {
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    role?: string;
+  };
+};
 
 const Page: React.FC<Props> = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -38,7 +49,7 @@ const Page: React.FC<Props> = () => {
   const [modal5Visible, setModal5Visible] = useState(false);
   const [refreshVar, setRefreshVar] = useState(false);
   const [refreshVar2, setRefreshVar2] = useState(false);
-  const { data: session } = useSession();
+  const { data: session } = useSession() as { data: ExtendedSession | null };
   const router = useRouter();
   const [alertStyle, setAlertStyle] = useState({
     variantHead: '',
@@ -385,7 +396,7 @@ const Page: React.FC<Props> = () => {
       )}
       {/* {revealCloud && <ChoosePicture onReturn={onReturnPicture} />} */}
 
-      <div className="blurFilter border-0 rounded-md p-2 shadow-2xl w-[95%] max-w-[650px] max-h-[85%] h-[85%]  md:w-full md:mt-8 bg-lightMainBG/70 dark:bg-darkMainBG/70">
+      <div className="blurFilter border-0 rounded-md p-2 shadow-2xl w-[95%] max-w-[850px] max-h-[85%] h-[85%]  md:w-full md:mt-8 bg-lightMainBG/70 dark:bg-darkMainBG/70">
         <div className="w-full h-full flex flex-col justify-center items-center border rounded-md border-lightMainColor dark:border-darkMainColor relative p-2 overflow-auto">
           {/* {session?.user.role == 'Admin' && ( */}
           <div className="absolute top-0 left-0 w-full p-2 flex flex-col justify-center items-center">
@@ -410,7 +421,9 @@ const Page: React.FC<Props> = () => {
                   });
                 }}
               />
-            ) : (
+            ) : session?.user &&
+              ('Admin' === session.user.role ||
+                'User' === session.user.role) ? (
               <div>
                 <button
                   className="w-[92%] h-48 m-1"
@@ -834,19 +847,6 @@ const Page: React.FC<Props> = () => {
                     )}
                     <p className="ml-2">Show heat number</p>
                   </div>
-<div className="flex flex-row mb-2.5 mt-2.5">
-                    {unmuteVideos !== undefined && (
-                      <input
-                        type="checkbox"
-                        checked={unmuteVideos}
-                        onChange={(e) =>
-                          handleChange(e.target.checked, 'unmuteVideos')
-                        }
-                        className="self-center"
-                      />
-                    )}
-                    <p className="ml-2">Unmute Videos</p>
-                  </div>
                   <div className="flex flex-row mb-2.5 mt-2.5">
                     {heatNum !== undefined && (
                       <ParsedHeatEditor
@@ -859,6 +859,20 @@ const Page: React.FC<Props> = () => {
                     )}
                   </div>
                   <p className="ml-2 text-center w-full">{heatNum}</p>
+                  <div className="flex flex-row mb-2.5 mt-2.5">
+                    {unmuteVideos !== undefined && (
+                      <input
+                        type="checkbox"
+                        checked={unmuteVideos}
+                        onChange={(e) =>
+                          handleChange(e.target.checked, 'unmuteVideos')
+                        }
+                        className="self-center"
+                      />
+                    )}
+                    <p className="ml-2">Unmute Videos</p>
+                  </div>
+
                   <div className="flex flex-row justify-center items-center">
                     <div className="flex flex-col justify-center items-center">
                       {compsArr && (
@@ -930,6 +944,40 @@ const Page: React.FC<Props> = () => {
                     )}
                     <p className="ml-2">Show SVG Animation</p>
                   </div>
+
+                  <div className="flex flex-row mb-2.5 mt-2.5">
+                      {/* {eventToShow && (
+<div className="flex flex-row justify-center items-center">
+                        <select
+                          value={eventToShow}
+                          onChange={(e) =>
+                            handleChange(e.target.value, 'eventToShow')
+                          }
+                          className="w-28 h-9 bg-white rounded-lg border border-[#776548] text-[#444] text-left"
+                        >
+                          {[
+                            'No frame',
+                            'Fire frame',
+                            'Running frame',
+                            'Glow frame',
+                          ].map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="ml-2">Choose Events to show results for</p>
+                        </div>
+                      )} */}
+                   
+                    
+                  </div>
+
+
+
+
+
+
                   {showSVGAnimation && (
                     <div className="w-full flex flex-row flex-wrap mb-2.5">
                       <div className="w-1/2 flex flex-col justify-center items-center p-1">
@@ -1081,7 +1129,30 @@ const Page: React.FC<Props> = () => {
                   )}
                 </div>
               </div>
+            ) : session?.user && session.user.role === 'MC' ? (
+              <div>
+                <p className=" w-full text-[#444] text-4xl capitalize text-center">
+                  {name}
+                </p>
+                <div className="flex flex-row mb-2.5 mt-2.5">
+                  {heatNum !== undefined && (
+                    <ParsedHeatEditor
+                      str1={heatNum}
+                      arrOfOpt={['Heat', 'Solo', 'Pro', 'Awards']}
+                      onChange={(value) => {
+                        if (value !== heatNum) handleChange(value, 'heatNum');
+                      }}
+                    />
+                  )}
+                </div>
+                <p className="ml-2 text-center w-full">{heatNum}</p>
+              </div>
+            ) : (
+              <> </>
             )}
+            {((session?.user && session.user.role === 'Admin') ||
+              (session?.user && session.user.role === 'Judge')) &&
+              id.length > 0 && <EventsDashboard id={id} />}
           </div>
           {/* )} */}
         </div>

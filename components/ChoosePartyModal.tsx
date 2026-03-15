@@ -33,6 +33,12 @@ type PartyType = {
   message: string;
   mode: string;
   fontSize: number;
+  fontSize2: number;
+  fontSizeTime: number;
+  frameStyle: string;
+  colorBG: string;
+  showTable: boolean;
+  showHeatNumber: boolean;
   displayedPictures: { link: string; name: string; dances: string[] }[];
   displayedVideos: {
     name: string;
@@ -166,6 +172,7 @@ const ChoosePartyModal = ({ onReturn, onAlert }: Props) => {
       message: string;
       mode: string;
       fontSize: number;
+      fontSize2: number;
       displayedPictures: { link: string; name: string; dances: string[] }[];
       displayedVideos: {
         name: string;

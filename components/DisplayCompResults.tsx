@@ -1,0 +1,190 @@
+"use client";
+
+import { useState, useMemo } from 'react';
+import { Dance, EventData, Judge, Team } from '@/types/types';
+import { motion } from 'framer-motion';
+import { Icon } from '@/components/Icon';
+
+/**
+ * Display Competition Results Page
+ * Displays the final leaderboard and a visual "Horse Track" representation of the scores.
+ */
+export default function DisplayCompResults({ scores, teams, dances, judges }: { scores: EventData['scores']; teams: Team[]; dances: Dance[]; judges: Judge[] })  {
+
+  const [selectedDanceId, setSelectedDanceId] = useState<string>('all');
+
+  
+
+  /**
+   * Calculates the total score for each team based on the selected dance filter.
+   * Memoized to prevent unnecessary recalculations.
+   */
+  const teamScores = useMemo(() => {
+    if (teams.length === 0) return [];
+
+    const results = teams.map(team => {
+      let total = 0;
+
+      if (selectedDanceId === 'all') {
+        // Sum across all dances
+        dances.forEach(dance => {
+          const danceScores = scores[dance.id] || {};
+          judges.forEach(judge => {
+            const score = danceScores[judge.id]?.[team.id];
+            if (score === 'gold') total += 3;
+            else if (score === 'silver') total += 2;
+            else if (score === 'bronze') total += 1;
+          });
+        });
+      } else {
+        // Sum for specific dance
+        const danceScores = scores[selectedDanceId] || {};
+        judges.forEach(judge => {
+          const score = danceScores[judge.id]?.[team.id];
+          if (score === 'gold') total += 3;
+          else if (score === 'silver') total += 2;
+          else if (score === 'bronze') total += 1;
+        });
+      }
+
+      return { ...team, score: total };
+    });
+
+    // Sort descending by score
+    results.sort((a, b) => b.score - a.score);
+
+    // Assign medals based on rank
+    // Top 3: Gold, Next 3: Silver, Rest: Bronze
+    return results.map((team, index) => {
+      let medal: 'gold' | 'silver' | 'bronze' = 'bronze';
+      if (index < 3) medal = 'gold';
+      else if (index < 6) medal = 'silver';
+      
+      return { ...team, medal, rank: index + 1 };
+    });
+  }, [selectedDanceId, teams, dances, judges, scores]);
+
+  
+
+  if (dances.length === 0) {
+    return (
+      <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-stone-200">
+        <div className="mx-auto w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center mb-4">
+          <Icon name="Trophy" className="h-10 w-10 text-stone-400" />
+        </div>
+        <h3 className="text-xl font-bold text-stone-900">No Dances</h3>
+        <p className="mt-2 text-stone-500 max-w-sm mx-auto">Add dances in the Settings page to see summaries.</p>
+      </div>
+    );
+  }
+
+  const maxActualScore = Math.max(...teamScores.map(t => t.score), 1); // Avoid division by zero
+
+  return (
+    <div className="space-y-10 pb-12">
+      <div>
+        <h1 className="text-4xl font-extrabold text-stone-900 tracking-tight">Summary</h1>
+        <p className="mt-2 text-stone-500 text-lg">View the current standings and race visualization.</p>
+      </div>
+
+      <div className="bg-white shadow-sm sm:rounded-3xl p-8 border border-stone-200/60">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+          <h2 className="text-2xl font-bold text-stone-900 flex items-center">
+            <Icon name="Flag" className="mr-3 h-7 w-7 text-violet-600" />
+            Horse Track
+          </h2>
+          <select
+            value={selectedDanceId}
+            onChange={(e) => setSelectedDanceId(e.target.value)}
+            className="block w-full sm:w-64 pl-4 pr-10 py-3 text-base border-stone-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-xl border bg-stone-50 font-medium"
+          >
+            <option value="all">Overall (All Dances)</option>
+            {dances.map(dance => (
+              <option key={dance.id} value={dance.id}>{dance.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="relative pt-10 pb-14 px-6 border-2 border-dashed border-stone-200 rounded-3xl bg-stone-50/50 overflow-hidden">
+          {/* Finish Line */}
+          <div className="absolute right-10 top-0 bottom-0 w-3 bg-red-500 z-0 flex flex-col items-center justify-center opacity-40">
+            <div className="h-full w-full" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, white 10px, white 20px)' }}></div>
+          </div>
+          
+          <div className="space-y-8 relative z-10">
+            {teamScores.map((team) => {
+              const percentage = (team.score / maxActualScore) * 88; // Max 88% to leave room for the avatar
+              
+              return (
+                <div key={team.id} className="relative h-16 flex items-center">
+                  {/* Track Line */}
+                  <div className="absolute left-0 right-0 h-1.5 bg-stone-200 rounded-full top-1/2 -translate-y-1/2"></div>
+                  
+                  {/* Horse / Team Avatar */}
+                  <motion.div
+                    initial={{ left: 0 }}
+                    animate={{ left: `${percentage}%` }}
+                    transition={{ type: 'spring', stiffness: 50, damping: 15 }}
+                    className="absolute flex flex-col items-center -translate-y-1/2 top-1/2"
+                  >
+                    <div 
+                      className="relative h-14 w-14 rounded-full border-4 shadow-lg flex items-center justify-center bg-white z-10"
+                      style={{ borderColor: team.color }}
+                    >
+                      {team.logo ? (
+                        <img src={team.logo} alt={team.name} className="h-full w-full rounded-full object-cover" />
+                      ) : (
+                        <span className="text-stone-800 font-bold text-sm">{team.name.substring(0, 2).toUpperCase()}</span>
+                      )}
+                      
+                      {/* Medal Badge */}
+                      <div className="absolute -top-2 -right-2 h-7 w-7 rounded-full flex items-center justify-center shadow-md border-2 border-white"
+                           style={{ 
+                             backgroundColor: team.medal === 'gold' ? '#FBBF24' : team.medal === 'silver' ? '#9CA3AF' : '#D97706'
+                           }}>
+                        <span className="text-white text-xs font-bold">{team.rank}</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 bg-white px-3 py-1 rounded-full shadow-sm border border-stone-100 text-xs font-bold text-stone-700 whitespace-nowrap">
+                      {team.name} ({team.score} pts)
+                    </div>
+                  </motion.div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Leaderboard Table */}
+      <div className="bg-white shadow-sm overflow-hidden sm:rounded-3xl border border-stone-200/60">
+        <div className="px-6 py-5 border-b border-stone-100 bg-stone-50/50">
+          <h3 className="text-xl font-bold text-stone-900">Leaderboard</h3>
+        </div>
+        <ul className="divide-y divide-stone-100">
+          {teamScores.map((team) => (
+            <li key={team.id} className="px-6 py-5 flex items-center justify-between hover:bg-stone-50 transition-colors">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm"
+                     style={{ backgroundColor: team.medal === 'gold' ? '#FBBF24' : team.medal === 'silver' ? '#9CA3AF' : '#D97706' }}>
+                  {team.rank}
+                </div>
+                <div className="ml-5 flex items-center">
+                  <div className="h-10 w-10 rounded-full mr-4 border-2 shadow-sm" style={{ borderColor: team.color, backgroundColor: team.color }}>
+                    {team.logo && <img src={team.logo} alt="" className="h-full w-full rounded-full object-cover" />}
+                  </div>
+                  <p className="text-lg font-bold text-stone-900">{team.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center">
+                <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-violet-100 text-violet-800">
+                  {team.score} Points
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}

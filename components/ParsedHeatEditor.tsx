@@ -123,7 +123,7 @@ export default function ParsedHeatEditor({
       <label className="flex flex-col justify-center items-centerw-1/3"  >
         Number:
           <CountBox
-                        startValue={numberValue !== "" ? parseInt(numberValue, 10) : 0}
+                        startValue={numberValue !== "" ? parseInt(numberValue) : 0}
                         setWidth={20}
                         name={'heat number'}
                         onChange={(num) => {

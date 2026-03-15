@@ -1,9 +1,10 @@
-"use client"
+'use client';
 import { createContext, useState } from 'react';
-import {   doc,  } from 'firebase/firestore';
-import { db } from '@/firebase'; 
-import { useDocument } from 'react-firebase-hooks/firestore';
- 
+import { collection, doc } from 'firebase/firestore';
+import { db } from '@/firebase';
+import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
+import { EventData } from '@/types/types';
+
 interface PartyContextType {
   image: string;
   name: string;
@@ -15,22 +16,27 @@ interface PartyContextType {
   fontSize: number;
   fontSizeTime: number;
   frameStyle: string;
-  displayedPictures: { link: string; name: string, dances:string[] }[];
+  displayedPictures: { link: string; name: string; dances: string[] }[];
   displayedVideos: {
     name: string;
     image: string;
     link: string;
-    dances:string[];
-  }[]; 
+    dances: string[];
+  }[];
   videoChoice: { link: string; name: string };
   compLogo: { link: string; name: string };
   titleBarHider: boolean;
   showUrgentMessage: boolean;
-  showTable:boolean;
-  tablePages:{name:string, tableRows:string[],rowsPictures:string[] | undefined; rowsChecked:boolean[]}[];
-  tableChoice:number;
+  showTable: boolean;
+  tablePages: {
+    name: string;
+    tableRows: string[];
+    rowsPictures: string[] | undefined;
+    rowsChecked: boolean[];
+  }[];
+  tableChoice: number;
   showHeatNumber: boolean;
-  heatNum:string ;
+  heatNum: string;
   showSVGAnimation: boolean;
   showBackdrop: boolean;
   unmuteVideos: boolean;
@@ -39,18 +45,20 @@ interface PartyContextType {
   manualPicture: { link: string; name: string };
   savedMessages: string[];
   textColor: string;
-  colorBG:string;
+  colorBG: string;
   id: string;
   animationSpeed: number;
   speedVariation: number;
-    particleCount: number;
-    maxSize: number;
-    animationOption:number;
-    rainAngle: number;
-    originX: number;
-    originY: number; 
-    compChoice:string;
-    particleTypes:string[];
+  particleCount: number;
+  maxSize: number;
+  animationOption: number;
+  rainAngle: number;
+  originX: number;
+  originY: number;
+  compChoice: string;
+  particleTypes: string[];
+  events: EventData[];
+  eventID: string;
 }
 interface ReturnPartyContextType {
   image: string;
@@ -59,27 +67,32 @@ interface ReturnPartyContextType {
   message2: string;
   fontSize2: number;
   mode: string;
-  fontName:string;
+  fontName: string;
   fontSize: number;
   fontSizeTime: number;
   frameStyle: string;
   unmuteVideos: boolean;
-  displayedPictures: { link: string; name: string, dances:string[] }[];
+  displayedPictures: { link: string; name: string; dances: string[] }[];
   displayedVideos: {
     name: string;
     image: string;
     link: string;
-    dances:string[];
-  }[]; 
+    dances: string[];
+  }[];
   videoChoice: { link: string; name: string };
   compLogo: { link: string; name: string };
   titleBarHider: boolean;
   showUrgentMessage: boolean;
   showTable: boolean;
-  tablePages:{name:string, tableRows:string[],rowsPictures:string[] | undefined; rowsChecked:boolean[]}[]
-  tableChoice:number;
+  tablePages: {
+    name: string;
+    tableRows: string[];
+    rowsPictures: string[] | undefined;
+    rowsChecked: boolean[];
+  }[];
+  tableChoice: number;
   showHeatNumber: boolean;
-  heatNum:string;
+  heatNum: string;
   showBackdrop: boolean;
   showSVGAnimation: boolean;
   displayedPicturesAuto: { link: string; name: string }[];
@@ -87,100 +100,108 @@ interface ReturnPartyContextType {
   manualPicture: { link: string; name: string };
   savedMessages: string[];
   textColor: string;
-  colorBG:string;
+  colorBG: string;
   animationSpeed: number;
   speedVariation: number;
   particleCount: number;
   maxSize: number;
-  animationOption:number;
+  animationOption: number;
   rainAngle: number;
   id: string;
   originX: number;
-  originY: number; 
-  compChoice:string;
-  particleTypes:string[];
+  originY: number;
+  compChoice: string;
+  particleTypes: string[];
+  events: EventData[];
+  eventID: string;
   setCompID: (id: string) => void;
-
-} 
-export const PartyContext = createContext<ReturnPartyContextType >({} as ReturnPartyContextType );
+}
+export const PartyContext = createContext<ReturnPartyContextType>(
+  {} as ReturnPartyContextType,
+);
 
 export default function usePartySettings(): ReturnPartyContextType {
-  const [compID, setCompID] = useState('00'); 
+  const [compID, setCompID] = useState('00');
   const partyArray: PartyContextType = {
     image: '',
-    name: '', 
+    name: '',
     message: '',
     message2: '',
     fontSize2: 5,
     mode: '',
-    fontName:'',
-    fontSize:10,
-    fontSizeTime:10,
-    frameStyle:"No frame",
-    displayedPictures:[],
-    displayedVideos:[],
-    videoChoice:{link:"",name:""}, 
-    compLogo:{link:"",name:""},
-    titleBarHider:false,
-    showUrgentMessage:false,
-    showTable:false,
-    unmuteVideos:false,
-    tablePages:[{name:"", tableRows:[""],rowsPictures: undefined, rowsChecked:[false]}],
-    tableChoice:0,
-    showHeatNumber:false,
-    heatNum:"",
-    showSVGAnimation:false,
-    showBackdrop:false,
-    displayedPicturesAuto:[],  
-    seconds:0, 
-    manualPicture:{link:"",name:""},
-    savedMessages:[""],
-    textColor:"",
-    colorBG:"",
-    id:"",
+    fontName: '',
+    fontSize: 10,
+    fontSizeTime: 10,
+    frameStyle: 'No frame',
+    displayedPictures: [],
+    displayedVideos: [],
+    videoChoice: { link: '', name: '' },
+    compLogo: { link: '', name: '' },
+    titleBarHider: false,
+    showUrgentMessage: false,
+    showTable: false,
+    unmuteVideos: false,
+    tablePages: [
+      {
+        name: '',
+        tableRows: [''],
+        rowsPictures: undefined,
+        rowsChecked: [false],
+      },
+    ],
+    tableChoice: 0,
+    showHeatNumber: false,
+    heatNum: '',
+    showSVGAnimation: false,
+    showBackdrop: false,
+    displayedPicturesAuto: [],
+    seconds: 0,
+    manualPicture: { link: '', name: '' },
+    savedMessages: [''],
+    textColor: '',
+    colorBG: '',
+    id: '',
     animationSpeed: 0,
     speedVariation: 0,
     particleCount: 0,
     maxSize: 0,
-    animationOption:0,
+    animationOption: 0,
     rainAngle: 0,
     originX: 0,
-    originY: 0, 
-    compChoice:"112",
-    particleTypes:["star","kiss",'snowflake', 'heart', 'tower','LP',"maple",'rose','diamond','clover','streamer','lightning','hydrangea','fred'],
+    originY: 0,
+    compChoice: '112',
+    events: [],
+    eventID: '',
+    particleTypes: [
+      'star',
+      'kiss',
+      'snowflake',
+      'heart',
+      'tower',
+      'LP',
+      'maple',
+      'rose',
+      'diamond',
+      'clover',
+      'streamer',
+      'lightning',
+      'hydrangea',
+      'fred',
+    ],
   };
-  
-    
+
+  const [value, loading, error] = useDocument(doc(db, 'parties', compID), {
+    snapshotListenOptions: { includeMetadataChanges: true },
+  });
  
-  const [value, loading, error] = useDocument(
-    doc(db, 'parties', compID),
-    {
-      snapshotListenOptions: { includeMetadataChanges: true },
-    }
-  );
- 
-   
-  const party = value ? {...value.data(), id:compID, } as PartyContextType : partyArray;
-  
+  const party = value
+    ? ({ ...value.data(), id: compID } as PartyContextType)
+    : partyArray;
+
   if (error) console.log('error', error);
-  
-  return {...party, setCompID};
+  console.log('usePartySettings - party:', party);
+  return { ...party, setCompID };
 }
-  
-
-
-
-
- 
-
- 
- 
-
-  
-
-
-
-
 
 // NEED TO ADD TO POSTGRESQL DB  QUERIES AT THE DATABASE:
 
