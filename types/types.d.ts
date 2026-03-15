@@ -32,6 +32,7 @@ export type Judge = {
 export type ScoreValue = 'gold' | 'silver' | 'bronze' | null;
 
 export type EventData = {
+  id: string;
   name?: string;
   createdAt?: number;
   teams: Team[];

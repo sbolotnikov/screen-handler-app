@@ -1,6 +1,6 @@
 'use client';
 
-import {  useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 
 type SessionUser = {
@@ -10,9 +10,6 @@ type SessionUser = {
   image?: string | null;
   role?: string | null;
 };
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/firebase';
 import { Icon } from '@/components/Icon';
 import SettingsDashboard from './SettingDashboard';
 import { Team, Dance, Judge, ScoreValue } from '@/types/types';
@@ -27,32 +24,36 @@ import usePartySettings from '@/hooks/usePartySettings';
 export default function EventsDashboard({ id }: { id?: string }) {
   const { data: session } = useSession();
   const user = session?.user as SessionUser | undefined;
-  const [snapshot, loading, error] = useCollection(
-    collection(doc(collection(db, 'parties'), id), 'events'),
-  );
-  const {events} = usePartySettings();
-  console.log('Events from usePartySettings:', events);
+  const { events, addEvent, deleteEvent, setCompID } = usePartySettings();
+
+  useEffect(() => {
+    if (id) {
+      setCompID(id);
+    }
+  }, [id, setCompID]);
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newEventName, setNewEventName] = useState('');
   const [eventID, setEventID] = useState<string | null>(null);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
-  // Derive teams, dances, and judges directly from snapshot and eventID
-  const selectedEvent = snapshot?.docs.find((doc) => doc.id === eventID);
-  const teams: Team[] = selectedEvent?.data().teams || [];
-  const dances: Dance[] = selectedEvent?.data().dances || [];
-  const judges: Judge[] = selectedEvent?.data().judges || [];
-  const eventName: string = selectedEvent?.data().name || '';
-  const scores: Record<string, Record<string, Record<string, ScoreValue | null>>> = selectedEvent?.data().scores || {};
+  // Derive teams, dances, and judges directly from events array and eventID
+  const selectedEvent = events.find((e) => e.id === eventID);
+  const teams: Team[] = selectedEvent?.teams || [];
+  const dances: Dance[] = selectedEvent?.dances || [];
+  const judges: Judge[] = selectedEvent?.judges || [];
+  const eventName: string = selectedEvent?.name || '';
+  const scores: Record<string, Record<string, Record<string, ScoreValue>>> =
+    selectedEvent?.scores || {};
+
   /**
-   * Handles the creation of a new event document in Firestore.
+   * Handles the creation of a new event in the events array.
    */
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEventName.trim() || !id || id === '00') return;
     try {
-      // Use the sub-collection 'events' inside the current party
-      await addDoc(collection(doc(collection(db, 'parties'), id), 'events'), {
+      await addEvent({
         name: newEventName.trim(),
         createdAt: Date.now(),
         teams: [],
@@ -68,13 +69,14 @@ export default function EventsDashboard({ id }: { id?: string }) {
   };
 
   /**
-   * Confirms and executes the deletion of an event document.
+   * Confirms and executes the deletion of an event from the events array.
    */
   const confirmDelete = async () => {
     if (!eventToDelete || !id || id === '00') return;
     try {
-      await deleteDoc(doc(db, 'parties', id, 'events', eventToDelete));
+      await deleteEvent(eventToDelete);
       setEventToDelete(null);
+      if (eventID === eventToDelete) setEventID(null);
     } catch (err) {
       console.error('Error deleting event:', err);
     }
@@ -88,15 +90,6 @@ export default function EventsDashboard({ id }: { id?: string }) {
         </h3>
       </div>
     );
-
-  if (loading)
-    return (
-      <div className="flex justify-center py-20">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600"></div>
-      </div>
-    );
-
-  if (error) return <div>Error loading events: {error.message}</div>;
 
   return (
     <div className="space-y-8">
@@ -118,14 +111,13 @@ export default function EventsDashboard({ id }: { id?: string }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {snapshot?.docs.map((document) => {
-          const data = document.data();
+        {events.map((event) => {
           return (
             <div
-              key={document.id}
+              key={event.id}
               onClick={(e) => {
                 e.preventDefault();
-                setEventID(document.id);
+                setEventID(event.id);
               }}
               className="block bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 relative group border border-stone-200/60 hover:border-violet-200 cursor-pointer"
             >
@@ -135,14 +127,14 @@ export default function EventsDashboard({ id }: { id?: string }) {
                     <Icon name="Calendar" className="h-7 w-7 text-violet-600" />
                   </div>
                   <h2 className="text-xl font-bold text-stone-900 truncate pr-8">
-                    {data.name || 'Unnamed Event'}
+                    {event.name || 'Unnamed Event'}
                   </h2>
                 </div>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setEventToDelete(document.id);
+                    setEventToDelete(event.id);
                   }}
                   className="absolute top-6 right-6 p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
                   title="Delete Event"
@@ -154,7 +146,7 @@ export default function EventsDashboard({ id }: { id?: string }) {
               <div className="mt-6 grid grid-cols-3 gap-4 border-t border-stone-100 pt-6">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-stone-900">
-                    {data.teams?.length || 0}
+                    {event.teams?.length || 0}
                   </p>
                   <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mt-1">
                     Teams
@@ -162,7 +154,7 @@ export default function EventsDashboard({ id }: { id?: string }) {
                 </div>
                 <div className="text-center border-l border-r border-stone-100">
                   <p className="text-2xl font-bold text-stone-900">
-                    {data.dances?.length || 0}
+                    {event.dances?.length || 0}
                   </p>
                   <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mt-1">
                     Dances
@@ -170,7 +162,7 @@ export default function EventsDashboard({ id }: { id?: string }) {
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-stone-900">
-                    {data.judges?.length || 0}
+                    {event.judges?.length || 0}
                   </p>
                   <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mt-1">
                     Judges
@@ -186,7 +178,7 @@ export default function EventsDashboard({ id }: { id?: string }) {
           );
         })}
 
-        {snapshot?.docs.length === 0 && (
+        {events.length === 0 && (
           <div className="col-span-full text-center py-20 bg-white rounded-3xl border-2 border-dashed border-stone-200">
             <div className="mx-auto w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center mb-4">
               <Icon name="Calendar" className="h-10 w-10 text-stone-400" />
@@ -206,23 +198,37 @@ export default function EventsDashboard({ id }: { id?: string }) {
             </button>
           </div>
         )}
-
-
-
-
       </div>
-{eventID && user?.role === 'Admin' && (
-          <div className="mt-8 w-full">
-            <SettingsDashboard partyID={id} id={eventID} name={eventName} teams={teams} dances={dances} judges={judges} />
-            <DisplayCompResults  scores={scores} teams={teams} dances={dances} judges={judges} />
-          </div>
-        )}
-        {eventID && user?.role === 'Judge' && (
-          <div className="mt-8 w-full">
-            <ScoringPage partyID={id} id={eventID} scores={scores} teams={teams} dances={dances} judges={judges.filter(judge => judge.id === user.id)} />
-            
-          </div>
-        )}
+      {eventID && user?.role === 'Admin' && (
+        <div className="mt-8 w-full">
+          <SettingsDashboard
+            partyID={id}
+            id={eventID}
+            name={eventName}
+            teams={teams}
+            dances={dances}
+            judges={judges}
+          />
+          <DisplayCompResults
+            scores={scores}
+            teams={teams}
+            dances={dances}
+            judges={judges}
+          />
+        </div>
+      )}
+      {eventID && user?.role === 'Judge' && (
+        <div className="mt-8 w-full">
+          <ScoringPage
+            partyID={id}
+            id={eventID}
+            scores={scores}
+            teams={teams}
+            dances={dances}
+            judges={judges.filter((judge) => judge.id === user.id)}
+          />
+        </div>
+      )}
       {/* Create Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4">

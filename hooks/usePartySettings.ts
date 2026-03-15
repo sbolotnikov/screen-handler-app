@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useState } from 'react';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import { EventData } from '@/types/types';
@@ -115,6 +115,10 @@ interface ReturnPartyContextType {
   events: EventData[];
   eventID: string;
   setCompID: (id: string) => void;
+  addEvent: (event: Omit<EventData, 'id'>) => Promise<void>;
+  updateEvent: (eventId: string, event: Partial<EventData>) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
+  updateEventField: <K extends keyof EventData>(eventId: string, field: K, value: EventData[K]) => Promise<void>;
 }
 export const PartyContext = createContext<ReturnPartyContextType>(
   {} as ReturnPartyContextType,
@@ -195,12 +199,54 @@ export default function usePartySettings(): ReturnPartyContextType {
   });
  
   const party = value
-    ? ({ ...value.data(), id: compID } as PartyContextType)
+    ? ({ ...partyArray, ...value.data(), id: compID } as PartyContextType)
     : partyArray;
+
+  const addEvent = async (event: Omit<EventData, 'id'>) => {
+    if (!compID || compID === '00') return;
+    const newEvent: EventData = { ...event, id: crypto.randomUUID() };
+    await updateDoc(doc(db, 'parties', compID), {
+      events: arrayUnion(newEvent),
+    });
+  };
+
+  const deleteEvent = async (eventId: string) => {
+    if (!compID || compID === '00') return;
+    const eventToRemove = party.events.find((e) => e.id === eventId);
+    if (eventToRemove) {
+      await updateDoc(doc(db, 'parties', compID), {
+        events: arrayRemove(eventToRemove),
+      });
+    }
+  };
+
+  const updateEvent = async (eventId: string, updatedEvent: Partial<EventData>) => {
+    if (!compID || compID === '00') return;
+    const newEvents = party.events.map((e) =>
+      e.id === eventId ? { ...e, ...updatedEvent } : e,
+    );
+    await updateDoc(doc(db, 'parties', compID), {
+      events: newEvents,
+    });
+  };
+
+  const updateEventField = async <K extends keyof EventData>(
+    eventId: string,
+    field: K,
+    value: EventData[K],
+  ) => {
+    if (!compID || compID === '00') return;
+    const newEvents = party.events.map((e) =>
+      e.id === eventId ? { ...e, [field]: value } : e,
+    );
+    await updateDoc(doc(db, 'parties', compID), {
+      events: newEvents,
+    });
+  };
 
   if (error) console.log('error', error);
   console.log('usePartySettings - party:', party);
-  return { ...party, setCompID };
+  return { ...party, setCompID, addEvent, updateEvent, deleteEvent, updateEventField };
 }
 
 // NEED TO ADD TO POSTGRESQL DB  QUERIES AT THE DATABASE:
