@@ -15,6 +15,7 @@ export default function ScoringPage({
   scores,
   teams,
   dances,
+  selectedDanceId,
   judges,
 }: {
   partyID: string;
@@ -22,6 +23,7 @@ export default function ScoringPage({
   scores: EventData['scores'];
   teams: Team[];
   dances: Dance[];
+  selectedDanceId: string;
   judges: Judge[];
 }) {
   const { updateEventField, setCompID } = usePartySettings();
@@ -126,7 +128,7 @@ export default function ScoringPage({
           </div>
 
           <div className="divide-y divide-stone-100">
-            {dances.map((dance) => (
+            {dances.filter((dance) => dance.id === selectedDanceId).map((dance) => (
               <div key={dance.id} className="px-6 py-8">
                 <h3 className="text-xl font-bold text-stone-800 mb-6 flex items-center">
                   <span className="w-2 h-6 bg-violet-500 rounded-full mr-3"></span>

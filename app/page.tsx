@@ -132,6 +132,9 @@ const Page: React.FC<Props> = () => {
     showBackdrop,
     setCompID,
     unmuteVideos,
+    events,
+    eventID,
+    selectedDanceId
   } = usePartySettings();
   const { heat } = useComp(compChoice || 'T9FLgtEDmxQFYFTnfrvO');
   const typesSet = [
@@ -352,6 +355,9 @@ const Page: React.FC<Props> = () => {
           onReturn={() => setModalVisible(false)}
           onRenewInterval={() => setRefreshVar2(!refreshVar2)}
           unmuteVideos={unmuteVideos}
+          events={events}
+          eventID={eventID}
+          selectedDanceId={selectedDanceId}
         />
       )}
       {galleryType && (
@@ -462,9 +468,10 @@ const Page: React.FC<Props> = () => {
                           'Auto',
                           'Auto Full',
                           'Auto Table',
-                          'Video',
-                          'Manual',
                           'Default',
+                          'Event Results',
+                          'Manual',
+                          'Video',
                         ].map((option) => (
                           <option key={option} value={option}>
                             {option}
@@ -875,6 +882,37 @@ const Page: React.FC<Props> = () => {
 
                   <div className="flex flex-row justify-center items-center">
                     <div className="flex flex-col justify-center items-center">
+                      {events && (
+                        <select
+                          value={eventID}
+                          onChange={(e) =>
+                            handleChange(e.target.value, 'eventID')
+                          }
+                          className="w-28 h-9 bg-white rounded-lg border border-[#776548] text-[#444] text-left"
+                        >
+                          {events.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <p className="text-center w-20">Choose Event to show results for</p>
+                    </div>
+                    {eventID.length>0 && (<select
+              value={selectedDanceId}
+              onChange={(e) =>handleChange(e.target.value, 'selectedDanceId')}
+              className="block w-full sm:w-64 pl-4 pr-10 py-3 text-base border-stone-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-xl border bg-stone-50 font-medium"
+            >
+              <option value="all">Overall (All Dances)</option>
+              {events.filter(event => event.id === eventID)[0].dances.map((dance) => (
+                <option key={dance.id} value={dance.id}>
+                  {dance.name}
+                </option>
+              ))}
+            </select>
+                    )}
+                    {/* <div className="flex flex-col justify-center items-center">
                       {compsArr && (
                         <select
                           value={compChoice}
@@ -891,7 +929,7 @@ const Page: React.FC<Props> = () => {
                         </select>
                       )}
                       <p className="text-center w-20">Choose comp</p>
-                    </div>
+                    </div> */}
                     <div className="flex flex-col justify-center items-center">
                       {fontSizeTime && (
                         <CountBox
@@ -946,29 +984,10 @@ const Page: React.FC<Props> = () => {
                   </div>
 
                   <div className="flex flex-row mb-2.5 mt-2.5">
-                      {/* {eventToShow && (
-<div className="flex flex-row justify-center items-center">
-                        <select
-                          value={eventToShow}
-                          onChange={(e) =>
-                            handleChange(e.target.value, 'eventToShow')
-                          }
-                          className="w-28 h-9 bg-white rounded-lg border border-[#776548] text-[#444] text-left"
-                        >
-                          {[
-                            'No frame',
-                            'Fire frame',
-                            'Running frame',
-                            'Glow frame',
-                          ].map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="ml-2">Choose Events to show results for</p>
-                        </div>
-                      )} */}
+
+
+
+                    
                    
                     
                   </div>

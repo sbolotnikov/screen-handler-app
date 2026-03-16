@@ -7,7 +7,7 @@ import ManualImage from './ManualImage';
 import AutoImages from './AutoImages';
 import FullAutoMode from './FullAutoMode';
 import { SettingsContext } from '@/hooks/useSettings';
-import { ScreenSettingsContextType } from '@/types/types';
+import { EventData, ScreenSettingsContextType } from '@/types/types';
 import { useDimensions } from '@/hooks/useDimensions';
 import svgPath from './svgPath';
 import ImgFromDb from '@/components/ImgFromDb';
@@ -17,6 +17,7 @@ import AnimatedTextMessage from '@/components/AnimatedTextMessage';
 import FrameGlow from '@/components/FrameGlow';
 import TablePage from './TablePage';
 import AutoTableMode from './AutoTableMode';
+import DisplayCompResults from './DisplayCompResults';
 
 type Props = {
   videoUri: { link: string; name: string };
@@ -42,8 +43,13 @@ type Props = {
   titleBarHider: boolean;
   showUrgentMessage: boolean;
   showTable: boolean;
-  tablePages:{name:string, tableRows:string[], rowsPictures:string[] | undefined; rowsChecked:boolean[]}[];
-  tableChoice:number;
+  tablePages: {
+    name: string;
+    tableRows: string[];
+    rowsPictures: string[] | undefined;
+    rowsChecked: boolean[];
+  }[];
+  tableChoice: number;
   showHeatNumber: boolean;
   textColor: string;
   colorBG: string;
@@ -59,7 +65,10 @@ type Props = {
   heat: string;
   showBackdrop: boolean;
   showSVGAnimation: boolean;
-  unmuteVideos:boolean;
+  unmuteVideos: boolean;
+  events: EventData[];
+  eventID: string;
+  selectedDanceId: string;
   onReturn: (submitten: string) => void;
   onRenewInterval: () => void;
 };
@@ -105,11 +114,14 @@ const ShowPlayingModal: React.FC<Props> = ({
   particleTypes,
   unmuteVideos,
   heat,
+  events,
+  eventID,
+  selectedDanceId,
   onReturn,
   onRenewInterval,
 }) => {
   const { changeNav } = useContext(
-    SettingsContext
+    SettingsContext,
   ) as ScreenSettingsContextType;
 
   const [picArrAutoMode, setPicArrAutoMode] = useState<
@@ -161,7 +173,6 @@ const ShowPlayingModal: React.FC<Props> = ({
     showSVGAnimation,
     particleTypes,
   ]);
-
   useEffect(() => {
     if (mode === 'Auto Full') {
       console.log('changing mode');
@@ -178,17 +189,17 @@ const ShowPlayingModal: React.FC<Props> = ({
       const arr1 = displayedPictures
         .map((pic) => ({ link: pic.link, dances: pic.dances }))
         .filter(
-          (pic) => pic.dances !== null && pic.dances.indexOf(message) >= 0
+          (pic) => pic.dances !== null && pic.dances.indexOf(message) >= 0,
         );
       const arr2 = displayedPictures
         .map((pic) => ({ link: pic.link, dances: pic.dances }))
         .filter((pic) => pic.dances !== null && pic.dances.indexOf('All') >= 0);
       const arr = arr1.concat(arr2);
       const videoArr1 = displayedVideos.filter(
-        (vid) => vid.dances !== null && vid.dances.indexOf(message) >= 0
+        (vid) => vid.dances !== null && vid.dances.indexOf(message) >= 0,
       );
       const videoArr2 = displayedVideos.filter(
-        (vid) => vid.dances !== null && vid.dances.indexOf('All') >= 0
+        (vid) => vid.dances !== null && vid.dances.indexOf('All') >= 0,
       );
       const videoArr = videoArr1.concat(videoArr2);
 
@@ -209,7 +220,7 @@ const ShowPlayingModal: React.FC<Props> = ({
       setTimeNow(
         currentDateTime.split(',')[1].split(' ')[1].slice(0, -3) +
           ' ' +
-          currentDateTime.split(',')[1].split(' ')[2]
+          currentDateTime.split(',')[1].split(' ')[2],
       );
     }, 60000);
     !vis ? changeNav(false) : changeNav(true);
@@ -217,7 +228,10 @@ const ShowPlayingModal: React.FC<Props> = ({
   }, [vis, refreshVar]);
 
   const gradientStyle = {
-    background:colorBG!==undefined?colorBG:'linear-gradient(to right, #183657, #A7C9E7, #C8F1F6, #183657, #A7C9E7, #C8F1F6, #183657, #A7C9E7, #C8F1F6)'
+    background:
+      colorBG !== undefined
+        ? colorBG
+        : 'linear-gradient(to right, #183657, #A7C9E7, #C8F1F6, #183657, #A7C9E7, #C8F1F6, #183657, #A7C9E7, #C8F1F6)',
   };
   // white, red, blue, red, white
   // "conic-gradient(at 40% 20%,#183657,#A7C9E7,#C8F1F6,#183657,#A7C9E7,#C8F1F6,#183657,#A7C9E7,#C8F1F6)"
@@ -230,7 +244,7 @@ const ShowPlayingModal: React.FC<Props> = ({
       svg.setAttribute('height', `${windowSize.height}`);
       svg.setAttribute(
         'viewBox',
-        `0 0 ${windowSize.width} ${windowSize.height}`
+        `0 0 ${windowSize.width} ${windowSize.height}`,
       );
 
       // Clear any existing transforms
@@ -249,11 +263,11 @@ const ShowPlayingModal: React.FC<Props> = ({
         const animateOpacity = document.createElementNS(svgNS, 'animate');
         const animateTransform = document.createElementNS(
           svgNS,
-          'animateTransform'
+          'animateTransform',
         );
         const animateTransform2 = document.createElementNS(
           svgNS,
-          'animateTransform'
+          'animateTransform',
         );
         const animateColor = document.createElementNS(svgNS, 'animate');
 
@@ -278,20 +292,20 @@ const ShowPlayingModal: React.FC<Props> = ({
               edge === 0
                 ? [Math.random() * windowSize.width!, windowSize.height!]
                 : edge === 1
-                ? [Math.random() * windowSize.width!, 0]
-                : edge === 2
-                ? [0, Math.random() * windowSize.height!]
-                : [windowSize.width!, Math.random() * windowSize.height!];
+                  ? [Math.random() * windowSize.width!, 0]
+                  : edge === 2
+                    ? [0, Math.random() * windowSize.height!]
+                    : [windowSize.width!, Math.random() * windowSize.height!];
           } else {
             [endX, endY] = [originX1, originY1];
             [startX, startY] =
               edge === 0
                 ? [Math.random() * windowSize.width!, windowSize.height!]
                 : edge === 1
-                ? [Math.random() * windowSize.width!, 0]
-                : edge === 2
-                ? [0, Math.random() * windowSize.height!]
-                : [windowSize.width, Math.random() * windowSize.height!];
+                  ? [Math.random() * windowSize.width!, 0]
+                  : edge === 2
+                    ? [0, Math.random() * windowSize.height!]
+                    : [windowSize.width, Math.random() * windowSize.height!];
           }
         } else if (animationOption1 === 4) {
           startX = Math.random() * windowSize.width!;
@@ -304,7 +318,7 @@ const ShowPlayingModal: React.FC<Props> = ({
 
           animateMotion.setAttribute(
             'path',
-            `M${startX},${startY} L${endX},${endY}`
+            `M${startX},${startY} L${endX},${endY}`,
           );
           animateMotion.setAttribute('dur', `${animationDuration}s`);
           animateMotion.setAttribute('begin', `${randomDelay}s`);
@@ -340,7 +354,7 @@ const ShowPlayingModal: React.FC<Props> = ({
           animateColor.setAttribute('repeatCount', 'indefinite');
           animateColor.setAttribute(
             'values',
-            'hsl(0, 100%, 50%); hsl(60, 100%, 50%); hsl(120, 100%, 50%); hsl(180, 100%, 50%); hsl(240, 100%, 50%); hsl(300, 100%, 50%); hsl(24, 80%, 50%)'
+            'hsl(0, 100%, 50%); hsl(60, 100%, 50%); hsl(120, 100%, 50%); hsl(180, 100%, 50%); hsl(240, 100%, 50%); hsl(300, 100%, 50%); hsl(24, 80%, 50%)',
           );
           animateColor.setAttribute('calcMode', 'discrete');
           particle.appendChild(animateTransform2);
@@ -366,7 +380,7 @@ const ShowPlayingModal: React.FC<Props> = ({
         ) {
           animateMotion.setAttribute(
             'path',
-            `M${startX},${startY} L${endX},${endY}`
+            `M${startX},${startY} L${endX},${endY}`,
           );
         }
         if (animationOption1 === 5) {
@@ -389,30 +403,33 @@ const ShowPlayingModal: React.FC<Props> = ({
             animateMotion.setAttribute(
               'path',
               `M${startX0!},${startY0!} Q${startX0! + (peakX! - startX0!) * 0.5},${
-              startY0! + (peakY! - startY0!) * 0.5
-            } ${peakX!},${peakY!}`
+                startY0! + (peakY! - startY0!) * 0.5
+              } ${peakX!},${peakY!}`,
             );
-            console.log("path for 0 particle", `M${startX0!},${startY0!} Q${startX0! + (peakX! - startX0!) * 0.5},${
-              startY0! + (peakY! - startY0!) * 0.5
-            } ${peakX!},${peakY!}`)
+            console.log(
+              'path for 0 particle',
+              `M${startX0!},${startY0!} Q${startX0! + (peakX! - startX0!) * 0.5},${
+                startY0! + (peakY! - startY0!) * 0.5
+              } ${peakX!},${peakY!}`,
+            );
             animateMotion.setAttribute('dur', '1s');
             animateMotion.setAttribute('begin', `0s`);
             animateMotion.setAttribute('repeatCount', 'indefinite');
           } else {
-          animateMotion.setAttribute(
-            'path',
-            `M${peakX},${peakY} Q${controlX},${controlY} ${endX},${endY}`
-          );
-          animateMotion.setAttribute('dur', '2s');
-          animateMotion.setAttribute(
-            'begin',
-            `${3 + (num1 / particleCount) * 0.002}s`
-          );
-        
-          animateMotion.setAttribute('repeatCount', 'indefinite');
-        }
+            animateMotion.setAttribute(
+              'path',
+              `M${peakX},${peakY} Q${controlX},${controlY} ${endX},${endY}`,
+            );
+            animateMotion.setAttribute('dur', '2s');
+            animateMotion.setAttribute(
+              'begin',
+              `${3 + (num1 / particleCount) * 0.002}s`,
+            );
+
+            animateMotion.setAttribute('repeatCount', 'indefinite');
+          }
           // animateMotion.setAttribute('additive', 'sum');
- 
+
           animateOpacity.setAttribute('attributeName', 'opacity');
           animateOpacity.setAttribute('from', '1');
           animateOpacity.setAttribute('to', '0');
@@ -443,7 +460,7 @@ const ShowPlayingModal: React.FC<Props> = ({
         animateColor.setAttribute('repeatCount', 'indefinite');
         animateColor.setAttribute(
           'values',
-          'hsl(0, 100%, 50%); hsl(60, 100%, 50%); hsl(120, 100%, 50%); hsl(180, 100%, 50%); hsl(240, 100%, 50%); hsl(300, 100%, 50%); hsl(360, 100%, 50%)'
+          'hsl(0, 100%, 50%); hsl(60, 100%, 50%); hsl(120, 100%, 50%); hsl(180, 100%, 50%); hsl(240, 100%, 50%); hsl(300, 100%, 50%); hsl(360, 100%, 50%)',
         );
 
         particle.appendChild(animateMotion);
@@ -452,15 +469,15 @@ const ShowPlayingModal: React.FC<Props> = ({
         particle.appendChild(animateColor);
 
         // Calculate individual particle speed
-        if (animationOption1!==5){
-        animateMotion.setAttribute('dur', `${10 / particleSpeed}s`);
-        animateMotion.setAttribute('repeatCount', 'indefinite');
+        if (animationOption1 !== 5) {
+          animateMotion.setAttribute('dur', `${10 / particleSpeed}s`);
+          animateMotion.setAttribute('repeatCount', 'indefinite');
         }
         return particle;
       };
 
       const nextAnimate = (n: number) => {
-        const timerInterval1 = setInterval(function () { 
+        const timerInterval1 = setInterval(function () {
           if (animationOption !== 5) return;
           clearInterval(timerInterval1);
           while (svg.firstChild) {
@@ -470,11 +487,10 @@ const ShowPlayingModal: React.FC<Props> = ({
           const particle1 = document.createElementNS(svgNS, 'path');
           const shape =
             particleTypes1[Math.floor(Math.random() * particleTypes1.length)];
-          
 
           particle1.setAttribute('d', svgPath(shape));
           particle1.setAttribute('fill', `hsl(32, 100%, 50%)`);
-          
+
           const startX = windowSize.width! * (0.2 + Math.random() * 0.6);
           const startY = windowSize.height! * 0.9;
 
@@ -485,8 +501,7 @@ const ShowPlayingModal: React.FC<Props> = ({
             svg.appendChild(createParticle(i, peakX, peakY, startX, startY));
           }
           nextAnimate(n - 1);
-        }, 5000 );
-         
+        }, 5000);
       };
 
       const init = () => {
@@ -549,6 +564,16 @@ const ShowPlayingModal: React.FC<Props> = ({
               unmuteVideos={unmuteVideos}
             />
           )}
+          {mode === 'Event Results' && events && events.length > 0 && (
+            <DisplayCompResults
+              name={events.filter((event) => event.id === eventID)[0].name!} 
+              scores={events.filter((event) => event.id === eventID)[0].scores}
+              teams={events.filter((event) => event.id === eventID)[0].teams}
+              dances={events.filter((event) => event.id === eventID)[0].dances}
+              judges={events.filter((event) => event.id === eventID)[0].judges}
+              selectedDanceId={selectedDanceId}
+            />
+          )}
           {mode === 'Auto' && (
             <AutoImages
               picsArray={displayedPicturesAuto.map((pic) => pic.link)}
@@ -589,13 +614,13 @@ const ShowPlayingModal: React.FC<Props> = ({
             <AutoTableMode
               message={message}
               tablePages={tablePages}
-              showBackdrop={showBackdrop} 
+              showBackdrop={showBackdrop}
               fontSize={fontSize}
               compLogo={compLogo.link}
               fontName={fontName}
               textColor={textColor}
             />
-          )}  
+          )}
           {mode === 'Manual' && (
             <ManualImage
               image1={manualPicture.link}
@@ -615,16 +640,30 @@ const ShowPlayingModal: React.FC<Props> = ({
                 bottom: `${fontSizeTime * 0.8}px`,
               }}
             >
-              {!showTable &&<div
-                className="h-full w-auto my-auto z-10 bg-center bg-no-repeat bg-contain"
-                style={{
-                  backgroundImage: `url(${compLogo.link})`,
-                  boxShadow: '0 30px 40px rgba(0,0,0,.1)',
-                }}
-              ></div>}
+              {!showTable && (
+                <div
+                  className="h-full w-auto my-auto z-10 bg-center bg-no-repeat bg-contain"
+                  style={{
+                    backgroundImage: `url(${compLogo.link})`,
+                    boxShadow: '0 30px 40px rgba(0,0,0,.1)',
+                  }}
+                ></div>
+              )}
             </div>
           )}
-          {showTable && (<TablePage tablePages={tablePages} tableChoice={tableChoice} fontSize={fontSize} fontSize2={fontSize2} picture1={compLogo.link} picture2={manualPicture.link} fontName={fontName} colorBG={colorBG} textColor={textColor}/>)}
+          {showTable && (
+            <TablePage
+              tablePages={tablePages}
+              tableChoice={tableChoice}
+              fontSize={fontSize}
+              fontSize2={fontSize2}
+              picture1={compLogo.link}
+              picture2={manualPicture.link}
+              fontName={fontName}
+              colorBG={colorBG}
+              textColor={textColor}
+            />
+          )}
           {showSVGAnimation1 && (
             <div className="absolute inset-0 flex justify-center items-center">
               {windowSize.width! > 0 && windowSize.height! > 0 && (

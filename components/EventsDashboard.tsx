@@ -24,7 +24,7 @@ import usePartySettings from '@/hooks/usePartySettings';
 export default function EventsDashboard({ id }: { id?: string }) {
   const { data: session } = useSession();
   const user = session?.user as SessionUser | undefined;
-  const { events, addEvent, deleteEvent, setCompID } = usePartySettings();
+  const { events, addEvent, deleteEvent, setCompID, selectedDanceId } = usePartySettings();
 
   useEffect(() => {
     if (id) {
@@ -210,10 +210,12 @@ export default function EventsDashboard({ id }: { id?: string }) {
             judges={judges}
           />
           <DisplayCompResults
+            name={eventName}
             scores={scores}
             teams={teams}
             dances={dances}
             judges={judges}
+            selectedDanceId={selectedDanceId!}
           />
         </div>
       )}
@@ -225,6 +227,7 @@ export default function EventsDashboard({ id }: { id?: string }) {
             scores={scores}
             teams={teams}
             dances={dances}
+            selectedDanceId={selectedDanceId!}
             judges={judges.filter((judge) => judge.id === user.id)}
           />
         </div>

@@ -59,6 +59,7 @@ interface PartyContextType {
   particleTypes: string[];
   events: EventData[];
   eventID: string;
+  selectedDanceId?: string;
 }
 interface ReturnPartyContextType {
   image: string;
@@ -114,6 +115,7 @@ interface ReturnPartyContextType {
   particleTypes: string[];
   events: EventData[];
   eventID: string;
+  selectedDanceId?: string;
   setCompID: (id: string) => void;
   addEvent: (event: Omit<EventData, 'id'>) => Promise<void>;
   updateEvent: (eventId: string, event: Partial<EventData>) => Promise<void>;
@@ -145,6 +147,7 @@ export default function usePartySettings(): ReturnPartyContextType {
     showUrgentMessage: false,
     showTable: false,
     unmuteVideos: false,
+    selectedDanceId: 'all',
     tablePages: [
       {
         name: '',
