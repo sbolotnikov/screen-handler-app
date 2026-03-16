@@ -102,16 +102,82 @@ export default function EventsDashboard({ id }: { id?: string }) {
             Manage your dance competitions
           </p>
         </div>
-        <button
+         {(session?.user && ((session.user as SessionUser).role === 'Admin' || (session.user as SessionUser).role === 'User')) && (<button
           onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-full text-white bg-violet-600 hover:bg-violet-700 shadow-md hover:shadow-lg transition-all"
         >
           <Icon name="Plus" className="mr-2 h-5 w-5" /> New Event
-        </button>
+        </button>)}
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {events.map((event) => {
+        {session && (session.user as SessionUser).role === 'Judge' ?
+events.filter((event) => event.judges.some((judge) => judge.id === user?.id)  ).map((event) => {
+          return (
+            <div
+              key={event.id}
+              onClick={(e) => {
+                e.preventDefault();
+                setEventID(event.id);
+              }}
+              className="block bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 relative group border border-stone-200/60 hover:border-violet-200 cursor-pointer"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-violet-50 rounded-2xl group-hover:bg-violet-100 transition-colors">
+                    <Icon name="Calendar" className="h-7 w-7 text-violet-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-stone-900 truncate pr-8">
+                    {event.name || 'Unnamed Event'}
+                  </h2>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setEventToDelete(event.id);
+                  }}
+                  className="absolute top-6 right-6 p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                  title="Delete Event"
+                >
+                  <Icon name="Trash2" className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mt-6 grid grid-cols-3 gap-4 border-t border-stone-100 pt-6">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-stone-900">
+                    {event.teams?.length || 0}
+                  </p>
+                  <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mt-1">
+                    Teams
+                  </p>
+                </div>
+                <div className="text-center border-l border-r border-stone-100">
+                  <p className="text-2xl font-bold text-stone-900">
+                    {event.dances?.length || 0}
+                  </p>
+                  <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mt-1">
+                    Dances
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-stone-900">
+                    {event.judges?.length || 0}
+                  </p>
+                  <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mt-1">
+                    Judges
+                  </p>
+                </div>
+              </div>
+                <div className="mt-6 flex items-center text-violet-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Manage Event{' '}
+                  <Icon name="ChevronRight" className="ml-1 h-4 w-4" />
+                </div>
+            </div>
+          );
+        })
+ :events.map((event) => {
           return (
             <div
               key={event.id}
@@ -170,10 +236,12 @@ export default function EventsDashboard({ id }: { id?: string }) {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center text-violet-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                Manage Event{' '}
-                <Icon name="ChevronRight" className="ml-1 h-4 w-4" />
-              </div>
+              {(session?.user && ((session.user as SessionUser).role === 'Admin' || (session.user as SessionUser).role === 'User')) && (
+                <div className="mt-6 flex items-center text-violet-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  Manage Event{' '}
+                  <Icon name="ChevronRight" className="ml-1 h-4 w-4" />
+                </div>
+              )}
             </div>
           );
         })}
