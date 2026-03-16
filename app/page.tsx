@@ -357,7 +357,7 @@ const Page: React.FC<Props> = () => {
           unmuteVideos={unmuteVideos}
           events={events}
           eventID={eventID}
-          selectedDanceId={selectedDanceId}
+          selectedDanceId={selectedDanceId!}
         />
       )}
       {galleryType && (
