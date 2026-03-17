@@ -10,7 +10,7 @@ import usePartySettings from '@/hooks/usePartySettings';
  * Allows judges to input scores (Gold, Silver, Bronze) for each team per dance.
  */
 export default function ScoringPage({
-  partyID,
+   
   id,
   scores,
   teams,
@@ -18,7 +18,6 @@ export default function ScoringPage({
   selectedDanceId,
   judges,
 }: {
-  partyID: string;
   id: string;
   scores: EventData['scores'];
   teams: Team[];
@@ -26,13 +25,13 @@ export default function ScoringPage({
   selectedDanceId: string;
   judges: Judge[];
 }) {
-  const { updateEventField, setCompID } = usePartySettings();
+  const { updateEventField, } = usePartySettings();
 
-  useEffect(() => {
-    if (partyID) {
-      setCompID(partyID);
-    }
-  }, [partyID, setCompID]);
+  // useEffect(() => {
+  //   if (partyID) {
+  //     setCompID(partyID);
+  //   }
+  // }, [partyID, setCompID]);
 
   /**
    * Handles updating a specific score for a team by a judge in a specific dance.

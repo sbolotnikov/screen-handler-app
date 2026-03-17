@@ -60,6 +60,7 @@ interface PartyContextType {
   events: EventData[];
   eventID: string;
   selectedDanceId?: string;
+  selectedDanceIdJudge?: string;
 }
 interface ReturnPartyContextType {
   image: string;
@@ -116,6 +117,7 @@ interface ReturnPartyContextType {
   events: EventData[];
   eventID: string;
   selectedDanceId?: string;
+  selectedDanceIdJudge?: string;
   setCompID: (id: string) => void;
   addEvent: (event: Omit<EventData, 'id'>) => Promise<void>;
   updateEvent: (eventId: string, event: Partial<EventData>) => Promise<void>;
@@ -148,6 +150,7 @@ export default function usePartySettings(): ReturnPartyContextType {
     showTable: false,
     unmuteVideos: false,
     selectedDanceId: 'all',
+    selectedDanceIdJudge: '',
     tablePages: [
       {
         name: '',

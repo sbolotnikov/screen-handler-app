@@ -134,9 +134,10 @@ const Page: React.FC<Props> = () => {
     unmuteVideos,
     events,
     eventID,
-    selectedDanceId
+    selectedDanceId,
+    selectedDanceIdJudge
   } = usePartySettings();
-  const { heat } = useComp(compChoice || 'T9FLgtEDmxQFYFTnfrvO');
+  // const { heat } = useComp(compChoice || 'T9FLgtEDmxQFYFTnfrvO');
   const typesSet = [
     'star',
     'kiss',
@@ -883,6 +884,7 @@ const Page: React.FC<Props> = () => {
                   <div className="flex flex-row justify-center items-center">
                     <div className="flex flex-col justify-center items-center">
                       {events && (
+                        
                         <select
                           value={eventID}
                           onChange={(e) =>
@@ -897,12 +899,14 @@ const Page: React.FC<Props> = () => {
                           ))}
                         </select>
                       )}
-                      <p className="text-center w-20">Choose Event to show results for</p>
+                      <p className="text-center w-20">Choose Dance to show results for</p>
                     </div>
-                    {eventID.length>0 && (<select
+                    {eventID.length>0 && (
+                       <div className="flex flex-col m-1">                  
+                      <select
               value={selectedDanceId}
               onChange={(e) =>handleChange(e.target.value, 'selectedDanceId')}
-              className="block w-full sm:w-64 pl-4 pr-10 py-3 text-base border-stone-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-xl border bg-stone-50 font-medium"
+              className="block w-32 pl-4 pr-10 py-3 text-base border-stone-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-xl border bg-stone-50 font-medium"
             >
               <option value="all">Overall (All Dances)</option>
               {events.filter(event => event.id === eventID)[0].dances.map((dance) => (
@@ -911,6 +915,25 @@ const Page: React.FC<Props> = () => {
                 </option>
               ))}
             </select>
+             <p className="text-center w-20">Choose dance to display</p>
+</div>
+                    )}
+                    {eventID.length>0 && (
+                      <div className="flex flex-col mb-1">   
+                      <select
+              value={selectedDanceIdJudge}
+              onChange={(e) =>handleChange(e.target.value, 'selectedDanceIdJudge')}
+              className="block w-32 pl-4 pr-10 py-3 text-base border-stone-300 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm rounded-xl border bg-stone-50 font-medium"
+            >
+              <option value="all">Overall (All Dances)</option>
+              {events.filter(event => event.id === eventID)[0].dances.map((dance) => (
+                <option key={dance.id} value={dance.id}>
+                  {dance.name}
+                </option>
+              ))}
+            </select>
+             <p className="text-center w-20">Choose dance to judge</p>
+</div>
                     )}
                     {/* <div className="flex flex-col justify-center items-center">
                       {compsArr && (
@@ -983,20 +1006,7 @@ const Page: React.FC<Props> = () => {
                     <p className="ml-2">Show SVG Animation</p>
                   </div>
 
-                  <div className="flex flex-row mb-2.5 mt-2.5">
-
-
-
-                    
-                   
-                    
-                  </div>
-
-
-
-
-
-
+       
                   {showSVGAnimation && (
                     <div className="w-full flex flex-row flex-wrap mb-2.5">
                       <div className="w-1/2 flex flex-col justify-center items-center p-1">
