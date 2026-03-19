@@ -10,28 +10,31 @@ import usePartySettings from '@/hooks/usePartySettings';
  * Allows judges to input scores (Gold, Silver, Bronze) for each team per dance.
  */
 export default function ScoringPage({
-   
+  partyID,
   id,
   scores,
   teams,
   dances,
   selectedDanceId,
   judges,
+  imgBg,
 }: {
+  partyID: string;
   id: string;
   scores: EventData['scores'];
   teams: Team[];
   dances: Dance[];
   selectedDanceId: string;
   judges: Judge[];
+  imgBg: string;
 }) {
-  const { updateEventField, } = usePartySettings();
+  const { updateEventField, setCompID } = usePartySettings();
 
-  // useEffect(() => {
-  //   if (partyID) {
-  //     setCompID(partyID);
-  //   }
-  // }, [partyID, setCompID]);
+  useEffect(() => {
+    if (partyID) {
+      setCompID(partyID);
+    }
+  }, [partyID, setCompID]);
 
   /**
    * Handles updating a specific score for a team by a judge in a specific dance.
@@ -43,7 +46,10 @@ export default function ScoringPage({
     score: ScoreValue,
   ) => {
     if (!id) return;
-    const newScores = { ...scores };
+    
+    // Deep clone the scores object to avoid direct mutations
+    const newScores = JSON.parse(JSON.stringify(scores));
+    
     if (!newScores[danceId]) newScores[danceId] = {};
     if (!newScores[danceId][judgeId]) newScores[danceId][judgeId] = {};
 
@@ -126,106 +132,118 @@ export default function ScoringPage({
             <h2 className="text-2xl font-bold text-stone-900">{judge.name}</h2>
           </div>
 
-          <div className="divide-y divide-stone-100">
-            {dances.filter((dance) => dance.id === selectedDanceId).map((dance) => (
-              <div key={dance.id} className="px-6 py-8">
-                <h3 className="text-xl font-bold text-stone-800 mb-6 flex items-center">
-                  <span className="w-2 h-6 bg-violet-500 rounded-full mr-3"></span>
-                  {dance.name}
-                </h3>
+          <div className="relative divide-y divide-stone-100">
+            {imgBg && (
+              <div
+                className="absolute inset-0 z-0 pointer-events-none opacity-50"
+                style={{
+                  backgroundImage: `url(${imgBg})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+            )}
+            {dances
+              .filter((dance) => dance.id === selectedDanceId)
+              .map((dance) => (
+                <div key={dance.id} className="relative z-10 px-6 py-8">
+                  <h3 className="text-xl font-bold text-stone-800 mb-6 flex items-center">
+                    <span className="w-2 h-6 bg-violet-500 rounded-full mr-3"></span>
+                    {dance.name}
+                  </h3>
 
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {teams.map((team) => {
-                    const currentScore =
-                      scores[dance.id]?.[judge.id]?.[team.id] || null;
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {teams.map((team) => {
+                      const currentScore =
+                        scores[dance.id]?.[judge.id]?.[team.id] || null;
 
-                    return (
-                      <div
-                        key={team.id}
-                        className="border border-stone-200 rounded-2xl p-5 flex flex-col items-center space-y-4 bg-white hover:shadow-md transition-shadow"
-                        style={{
-                          borderTopColor: team.color,
-                          borderTopWidth: '6px',
-                        }}
-                      >
-                        <div className="flex items-center space-x-3 w-full">
-                          {team.logo ? (
-                            <img
-                              src={team.logo}
-                              alt={team.name}
-                              className="h-10 w-10 rounded-full object-cover shadow-sm"
-                            />
-                          ) : (
-                            <div
-                              className="h-10 w-10 rounded-full flex items-center justify-center shadow-sm"
-                              style={{ backgroundColor: team.color }}
-                            >
-                              <span className="text-white text-sm font-bold">
-                                {team.name.charAt(0)}
-                              </span>
-                            </div>
-                          )}
-                          <span className="font-bold text-stone-900 truncate text-lg">
-                            {team.name}
-                          </span>
-                        </div>
+                      return (
+                        <div
+                          key={team.id}
+                          className="border border-stone-200 rounded-2xl p-5 flex flex-col items-center space-y-4 bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow"
+                          style={{
+                            borderTopColor: team.color,
+                            borderTopWidth: '6px',
+                          }}
+                        >
+                          <div className="flex items-center space-x-3 w-full">
+                            {team.logo ? (
+                              <img
+                                src={team.logo}
+                                alt={team.name}
+                                className="h-10 w-10 rounded-full object-cover shadow-sm"
+                              />
+                            ) : (
+                              <div
+                                className="h-10 w-10 rounded-full flex items-center justify-center shadow-sm"
+                                style={{ backgroundColor: team.color }}
+                              >
+                                <span className="text-white text-sm font-bold">
+                                  {team.name.charAt(0)}
+                                </span>
+                              </div>
+                            )}
+                            <span className="font-bold text-stone-900 truncate text-lg">
+                              {team.name}
+                            </span>
+                          </div>
 
-                        <div className="flex space-x-2 w-full justify-center">
-                          <button
-                            onClick={() =>
-                              handleScoreChange(
-                                judge.id,
-                                dance.id,
-                                team.id,
+                          <div className="flex space-x-2 w-full justify-center">
+                            <button
+                              onClick={() =>
+                                handleScoreChange(
+                                  judge.id,
+                                  dance.id,
+                                  team.id,
+                                  'gold',
+                                )
+                              }
+                              className={`flex-1 py-2 text-xs font-bold rounded-full border transition-all duration-200 ${getScoreColor(
                                 'gold',
-                              )
-                            }
-                            className={`flex-1 py-2 text-xs font-bold rounded-full border transition-all duration-200 ${getScoreColor(
-                              'gold',
-                              currentScore,
-                            )}`}
-                          >
-                            Gold
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleScoreChange(
-                                judge.id,
-                                dance.id,
-                                team.id,
+                                currentScore,
+                              )}`}
+                            >
+                              Gold
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleScoreChange(
+                                  judge.id,
+                                  dance.id,
+                                  team.id,
+                                  'silver',
+                                )
+                              }
+                              className={`flex-1 py-2 text-xs font-bold rounded-full border transition-all duration-200 ${getScoreColor(
                                 'silver',
-                              )
-                            }
-                            className={`flex-1 py-2 text-xs font-bold rounded-full border transition-all duration-200 ${getScoreColor(
-                              'silver',
-                              currentScore,
-                            )}`}
-                          >
-                            Silver
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleScoreChange(
-                                judge.id,
-                                dance.id,
-                                team.id,
+                                currentScore,
+                              )}`}
+                            >
+                              Silver
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleScoreChange(
+                                  judge.id,
+                                  dance.id,
+                                  team.id,
+                                  'bronze',
+                                )
+                              }
+                              className={`flex-1 py-2 text-xs font-bold rounded-full border transition-all duration-200 ${getScoreColor(
                                 'bronze',
-                              )
-                            }
-                            className={`flex-1 py-2 text-xs font-bold rounded-full border transition-all duration-200 ${getScoreColor(
-                              'bronze',
-                              currentScore,
-                            )}`}
-                          >
-                            Bronze
-                          </button>
+                                currentScore,
+                              )}`}
+                            >
+                              Bronze
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       ))}

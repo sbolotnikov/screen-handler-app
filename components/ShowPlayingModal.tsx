@@ -10,7 +10,6 @@ import { SettingsContext } from '@/hooks/useSettings';
 import { EventData, ScreenSettingsContextType } from '@/types/types';
 import { useDimensions } from '@/hooks/useDimensions';
 import svgPath from './svgPath';
-import ImgFromDb from '@/components/ImgFromDb';
 import FrameOnFire from '@/components/FrameOnFire';
 import FrameRunnerEffect from '@/components/FrameRunnerEffect';
 import AnimatedTextMessage from '@/components/AnimatedTextMessage';
@@ -572,6 +571,7 @@ const ShowPlayingModal: React.FC<Props> = ({
               dances={events.filter((event) => event.id === eventID)[0].dances}
               judges={events.filter((event) => event.id === eventID)[0].judges}
               selectedDanceId={selectedDanceId}
+              imgBg={compLogo.link}
             />
           )}
           {mode === 'Auto' && (

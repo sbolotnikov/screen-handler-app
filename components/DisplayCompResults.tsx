@@ -16,6 +16,7 @@ export default function DisplayCompResults({
   teams,
   dances,
   judges,
+  imgBg,
   selectedDanceId
 }: {
   name: string;
@@ -23,6 +24,7 @@ export default function DisplayCompResults({
   teams: Team[];
   dances: Dance[];
   judges: Judge[];
+  imgBg: string;
   selectedDanceId: string;
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -160,6 +162,17 @@ export default function DisplayCompResults({
           </div>
 
           <div className="relative pt-10 pb-14 px-6 border-2 border-dashed border-stone-200 rounded-3xl bg-stone-50/50 overflow-hidden">
+            {imgBg && (
+              <div
+                className="absolute inset-0 z-0 pointer-events-none opacity-50"
+                style={{
+                  backgroundImage: `url(${imgBg})`,
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'center',
+                }}
+              />
+            )}
             {/* Finish Line */}
             <div className="absolute right-10 top-0 bottom-0 w-3 bg-red-500 z-0 flex flex-col items-center justify-center opacity-40">
               <div

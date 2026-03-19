@@ -901,7 +901,7 @@ const Page: React.FC<Props> = () => {
                       )}
                       <p className="text-center w-20">Choose Dance to show results for</p>
                     </div>
-                    {eventID.length>0 && (
+                    {eventID && eventID.length>0 && (
                        <div className="flex flex-col m-1">                  
                       <select
               value={selectedDanceId}
@@ -918,7 +918,7 @@ const Page: React.FC<Props> = () => {
              <p className="text-center w-20">Choose dance to display</p>
 </div>
                     )}
-                    {eventID.length>0 && (
+                    {eventID && eventID.length>0 && (
                       <div className="flex flex-col mb-1">   
                       <select
               value={selectedDanceIdJudge}

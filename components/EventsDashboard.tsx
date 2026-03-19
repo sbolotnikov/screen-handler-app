@@ -24,7 +24,7 @@ import usePartySettings from '@/hooks/usePartySettings';
 export default function EventsDashboard({ id }: { id?: string }) {
   const { data: session } = useSession();
   const user = session?.user as SessionUser | undefined;
-  const { events, addEvent, deleteEvent, setCompID, selectedDanceId, selectedDanceIdJudge } = usePartySettings();
+  const { events, addEvent, deleteEvent, setCompID, compLogo, selectedDanceId, selectedDanceIdJudge } = usePartySettings();
 
   useEffect(() => {
     if (id) {
@@ -278,6 +278,7 @@ events.filter((event) => event.judges.some((judge) => judge.id === user?.id)  ).
             judges={judges}
           />
           <DisplayCompResults
+            imgBg={compLogo.link}
             name={eventName}
             scores={scores}
             teams={teams}
@@ -290,12 +291,14 @@ events.filter((event) => event.judges.some((judge) => judge.id === user?.id)  ).
       {eventID && user?.role === 'Judge' && (
         <div className="mt-8 w-full">
           <ScoringPage
+            partyID={id}
             id={eventID}
             scores={scores}
             teams={teams}
             dances={dances}
             selectedDanceId={selectedDanceIdJudge!}
             judges={judges.filter((judge) => judge.id === user.id)}
+            imgBg={compLogo.link}
           />
         </div>
       )}
